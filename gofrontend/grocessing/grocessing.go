@@ -22,7 +22,7 @@ var (
 
 	sketch Sketch
 
-	stop chan bool
+	stop chan bool = make(chan bool)
 
 	winTitle string = "Debug view"
 
@@ -77,6 +77,8 @@ func GrocessingStart(s Sketch) {
 	}
 
 	sketch.Setup()
+
+	//draw routine
 	go func() {
 		defer renderer.Destroy()
 		runtime.LockOSThread()
@@ -97,6 +99,19 @@ func GrocessingStart(s Sketch) {
 			}
 		}
 	}()
+	//event routine
+	go func() {
+		for {
+			for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+				switch event.(type) {
+				case *sdl.QuitEvent:
+					fmt.Println("EXIT")
+					stop <- true
+				}
+			}
+		}
+	}()
+
 	<-stop
 	os.Exit(0)
 }
