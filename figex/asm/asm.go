@@ -320,18 +320,14 @@ func (state *State) flagResult(result int) byte {
 	state.Reg[RF] &= ((1 << F_ZERO) ^ 0xFF)
 
 	// Check byte bounds
-	if result < 0 {
-		result = -result // WARNING: may be need zero value or `0xFF - result`
-		state.Reg[RF] |= (1 << F_FAULT)
-	}
-
-	if result > 0xFF {
+	switch {
+	case result < 0:
+		result = 0xFF + (result % 0xFF) // WARNING: may be need zero value or `0xFF - result`
+		state.Reg[RF] |= (1 << F_OVER)
+	case result > 0xFF:
 		result = result & 0xFF
 		state.Reg[RF] |= (1 << F_OVER)
-	}
-
-	// Check for zero
-	if result == 0 {
+	case result == 0: // Check for zero
 		state.Reg[RF] |= (1 << F_ZERO)
 	}
 
