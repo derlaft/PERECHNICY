@@ -80,15 +80,17 @@ func (m *Map) getChunk(pt Point) *Chunk {
 	return chunk
 }
 
+func (m *Map) OutOfBorder(pt Point) bool {
+	return pt.Dist(Point{0, 0}) >= m.Size
+}
+
 // generate chunk
 func (m *Map) GenChunk(pt Point) *Chunk {
 	chunk := &Chunk{}
 
-	border := pt.Dist(Point{0, 0}) >= m.Size
-
 	for i, row := range chunk.Data {
 		for j := range row {
-			if !border {
+			if !m.OutOfBorder(pt) {
 				// no need to lock chunk here: it's not linked to Chunks
 				chunk.Data[i][j] = (1 - byte(float64(rand.Intn(100))*0.011))
 			} else {

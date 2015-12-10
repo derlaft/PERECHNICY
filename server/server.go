@@ -154,5 +154,9 @@ func getBot(user *User) *Control {
 		panic(err)
 	}
 	fmt.Fprintf(os.Stderr, "Spawned bot for %v\n", user.Name)
-	return NewEntity(game, Point{1, 1}, NewBot(prog))
+
+	//TODO: find safe spawn location and use it
+	control, _ := NewEntity(game, Point{1, 1}, NewBot(prog))
+	return control
+
 }

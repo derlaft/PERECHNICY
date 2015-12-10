@@ -41,15 +41,19 @@ type EventInterface interface {
 	SendEvent(int, Point, *Control)
 }
 
-func NewEntity(g *Game, l Point, e Entity) *Control {
+func NewEntity(g *Game, l Point, e Entity) (*Control, bool) {
 	c := &Control{g, Point{}, e}
 
-	//var on *Control
-	//for on = g.EntityAt(l); on != nil || g.EvHandler.IsSolid(g.World.At(l)); l = l.Add(Point{1, 0}) {
-	//}
+	//I suggest to use special spawner block for creating entities
+	if !c.Move(l) {
+		return nil, false
+	}
 
-	c.Move(l)
-	return c
+	return c, true
+}
+
+func (g *Game) IsBlockSolid(pt Point) bool {
+	return g.EvHandler.IsSolid(g.World.At(pt))
 }
 
 func (g *Game) EntityAt(pt Point) *Control {
@@ -72,6 +76,7 @@ func (g *Game) At(pt Point) byte {
 func (g *Game) Tick() {
 	//TODO: do smth with dat locks
 	//TODO: parallel tick handling
+	//TODO: and make it parallel
 	g.RLock()
 	for _, entity := range g.Entities {
 		g.RUnlock()
@@ -91,7 +96,7 @@ func (c *Control) Move(next Point) bool {
 	entityAt := c.Game.EntityAt(next)
 	c.Game.RUnlock()
 
-	if !c.Game.EvHandler.IsSolid(c.Game.World.At(next)) && entityAt == nil {
+	if !c.Game.IsBlockSolid(next) && entityAt == nil {
 		c.Game.Lock()
 		delete(c.Game.Entities, key{movedFrom, c.Location})
 		c.Game.Entities[key{movedTo, next}] = c
