@@ -1,0 +1,29 @@
+MOV R0 &2
+START:
+  MOV RA &10
+LOOP:
+  INT &2
+  DEC RA
+  CMP RA &0
+  JE :NEXT
+  INT &1
+  JF :NEXT
+  JMP :LOOP
+NEXT:
+  INC R0
+  JMP :START
+
+FINDBEAR:
+    MOV RC &0
+  LSTART:
+    LD RD RC
+    CMP RD &62
+    JE :FOUND
+  INC RC
+    CMP RC, &19
+    JNE :LSTART
+    RET
+  FOUND:
+    DIV 
+    
+
