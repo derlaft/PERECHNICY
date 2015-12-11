@@ -22,6 +22,9 @@ const (
 	DIRECTION_DOWN  = 2
 	DIRECTION_LEFT  = 3
 	VIDEO_SIZE      = 5
+	QSZ             = VIDEO_SIZE * VIDEO_SIZE
+	MOVEMENT_AP     = 5
+	ENERGY_START    = 100
 )
 
 type Interrupt func(*Bot, *Control)
@@ -29,6 +32,7 @@ type Interrupt func(*Bot, *Control)
 type Bot struct {
 	Prog   *mio.Prog
 	Energy uint
+	AP     uint
 }
 
 type JSONOutput struct {
@@ -37,12 +41,15 @@ type JSONOutput struct {
 	Inst   string
 	Health uint
 	Energy uint
-	AP     int
+	AP     uint
 	Map    [3][VIDEO_SIZE * VIDEO_SIZE]byte
 }
 
 func NewBot(prog mio.Prog) *Bot {
-	bot := Bot{Prog: &prog}
+	bot := Bot{
+		Prog:   &prog,
+		Energy: ENERGY_START,
+	}
 	return &bot
 }
 
@@ -55,6 +62,17 @@ func (b *Bot) OnDamage(c *Control, dmg uint) {
 }
 
 func (b *Bot) Tick(c *Control) {
+
+	inc, max := b.APParams(c)
+
+	b.AP = (b.AP + inc) % max
+	b.Energy -= 1
+
+	if b.Energy == 0 {
+		//self-destruct
+		c.Destroy()
+	}
+
 	retInt := b.Prog.Tick()
 	if retInt != nil { //handle hwint
 		handler := handlers[*retInt] //TODO: replace incorrect int with FLT
@@ -64,11 +82,22 @@ func (b *Bot) Tick(c *Control) {
 	}
 }
 
+func (b *Bot) APParams(c *Control) (increment uint, max uint) {
+	return 1, 25
+}
+
 func (b *Bot) Byte(c *Control) byte {
 	return ENTITY_BOT
 }
 
 func MoveInt(b *Bot, c *Control) {
+
+	if b.AP > MOVEMENT_AP {
+		b.AP -= MOVEMENT_AP
+	} else {
+		b.Prog.Flt()
+		return
+	}
 
 	var add Point
 
@@ -122,11 +151,9 @@ func memcpy(arr []byte, from, to, n int) {
 
 func ScanInt(b *Bot, c *Control) {
 
-	QS := VIDEO_SIZE * VIDEO_SIZE
-
 	//copy buffers
 	for i := 1; i >= 0; i-- {
-		memcpy(b.Prog.State.Mem[:], i*QS, (i+1)*QS, QS)
+		memcpy(b.Prog.State.Mem[:], i*QSZ, (i+1)*QSZ, QSZ)
 	}
 
 	//do scan
@@ -163,6 +190,7 @@ func (b *Bot) JSON(c *Control) []byte {
 		Map:    [3][VIDEO_SIZE * VIDEO_SIZE]byte{},
 		Health: b.Health(),
 		Energy: b.Energy,
+		AP:     b.AP,
 	}
 
 	for i := 0; i < 3; i++ {

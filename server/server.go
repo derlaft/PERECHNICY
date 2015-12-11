@@ -83,14 +83,14 @@ func start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if already started
-	_, exists := ctl.get(*user)
-	if exists {
-		fmt.Fprintf(w, "FAIL: already exists")
+	bot, exists := ctl.get(*user)
+	if exists && !bot.Destroyed {
+		fmt.Fprintf(w, "EXISTS")
 		return
 	}
 
 	// start
-	bot := getBot(user)
+	bot = getBot(user)
 	ctl.Lock()
 	ctl.bots[*user] = bot
 	ctl.Unlock()
@@ -135,9 +135,12 @@ func get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	bot, _ := ctl.get(*user)
-	if bot == nil {
+	bot, exists := ctl.get(*user)
+	if bot == nil || !exists {
 		fmt.Fprintf(w, "NOT FOUND\n")
+		return
+	} else if bot.Destroyed {
+		fmt.Fprintf(w, "DESTROYED")
 		return
 	}
 

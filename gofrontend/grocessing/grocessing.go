@@ -30,11 +30,17 @@ var (
 	stack []*Matrix
 )
 
+const (
+	STYLE_NORMAL = iota
+	STYLE_BOLD
+)
+
 type Matrix struct {
 	fillColor   Color
 	strokeColor Color
 	draw_stroke bool
 	draw_fill   bool
+	textStyle   int
 	x, y        int
 }
 
@@ -213,7 +219,16 @@ func Rect(x, y, w, h int) {
 }
 
 func Text(txt string, x, y, w, h int) {
-	surface, err := font.RenderUTF8_Blended(txt, *m.fillColor)
+	var (
+		surface *sdl.Surface
+		err     error
+	)
+	switch m.textStyle {
+	case STYLE_NORMAL:
+		surface, err = font.RenderUTF8_Blended(txt, *m.fillColor)
+	case STYLE_BOLD:
+		surface, err = font.RenderUTF8_Solid(txt, *m.fillColor)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -225,14 +240,18 @@ func Text(txt string, x, y, w, h int) {
 
 	rw, rh, err := font.SizeUTF8(txt)
 	r := &sdl.Rect{
-		int32(m.x + (Max(rw, int(w))-Min(rw, int(w)))/2),
-		int32(m.y + (Max(rh, int(h))-Min(rh, int(h)))/2),
+		int32(m.x + x + (Max(rw, int(w))-Min(rw, int(w)))/2),
+		int32(m.y + y + (Max(rh, int(h))-Min(rh, int(h)))/2),
 		int32(rw),
 		int32(rh),
 	}
 
 	renderer.Copy(texture, nil, r)
 	texture.Destroy()
+}
+
+func TextStyle(style int) {
+	m.textStyle = style
 }
 
 func LoadImage(path string) (*Image, error) {

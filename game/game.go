@@ -17,9 +17,10 @@ type Entity interface {
 }
 
 type Control struct {
-	Game     *Game
-	Location Point
-	Entity   Entity
+	Game      *Game
+	Location  Point
+	Entity    Entity
+	Destroyed bool
 }
 
 type Entities map[key]*Control
@@ -41,15 +42,19 @@ type EventInterface interface {
 	SendEvent(int, Point, *Control)
 }
 
-func NewEntity(g *Game, l Point, e Entity) (*Control, bool) {
-	c := &Control{g, Point{}, e}
+func NewEntity(game *Game, l Point, entity Entity) (*Control, bool) {
+	ctl := &Control{
+		Game:     game,
+		Location: Point{},
+		Entity:   entity,
+	}
 
 	//I suggest to use special spawner block for creating entities
-	if !c.Move(l) {
+	if !ctl.Move(l) {
 		return nil, false
 	}
 
-	return c, true
+	return ctl, true
 }
 
 func (g *Game) IsBlockSolid(pt Point) bool {
@@ -86,11 +91,15 @@ func (g *Game) Tick() {
 	g.RUnlock()
 }
 
+func (g *Game) getKey(l Point) *key {
+	return &key{g.World.GetChunk(l), l}
+}
+
 // Yes, the only supported movement type is teleporting, lol
 func (c *Control) Move(next Point) bool {
 
-	movedFrom := c.Game.World.GetChunk(c.Location)
-	movedTo := c.Game.World.GetChunk(next)
+	movedFrom := c.Game.getKey(c.Location)
+	movedTo := c.Game.getKey(next)
 
 	c.Game.RLock()
 	entityAt := c.Game.EntityAt(next)
@@ -98,8 +107,8 @@ func (c *Control) Move(next Point) bool {
 
 	if !c.Game.IsBlockSolid(next) && entityAt == nil {
 		c.Game.Lock()
-		delete(c.Game.Entities, key{movedFrom, c.Location})
-		c.Game.Entities[key{movedTo, next}] = c
+		delete(c.Game.Entities, *movedFrom)
+		c.Game.Entities[*movedTo] = c
 		c.Game.Unlock()
 
 		c.Location = next
@@ -114,6 +123,11 @@ func (c *Control) Move(next Point) bool {
 		//solid block
 		return false
 	}
+}
+
+func (c *Control) Destroy() {
+	c.Destroyed = true
+	delete(c.Game.Entities, *c.Game.getKey(c.Location))
 }
 
 func (e *Control) Byte() byte {

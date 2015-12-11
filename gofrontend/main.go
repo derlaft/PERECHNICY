@@ -21,11 +21,19 @@ var (
 	state      entities.JSONOutput
 	lock       sync.Mutex
 	imageTable map[byte]*Image
-	scale      int = 32
+	scale      int  = 32
+	gameOver   bool = false
 )
 
 const (
-	SERVER_URL = "http://127.0.0.1:4242/"
+	SERVER_URL     = "http://127.0.0.1:4242/"
+	GAME_OVER_SIGN = "GAME OVER"
+)
+
+const (
+	OK = iota
+	GAME_OVER
+	NETWORK_ERROR
 )
 
 type sketch struct {
@@ -115,7 +123,7 @@ func drawState(x, y int) {
 		{"INST", fmt.Sprintf("%3s", state.Inst)}, //text should not be empty
 		{"HEALTH", fmt.Sprintf("%d", state.Health)},
 		{"ENERGY", fmt.Sprintf("%d", state.Energy)},
-		{"AP", fmt.Sprintf("%d", 2)},
+		{"AP", fmt.Sprintf("%d", state.AP)},
 		{"_GELIFOZ", fmt.Sprintf("%08b", state.Reg[15])},
 	}
 
@@ -154,10 +162,23 @@ func drawMap(x, y int) {
 }
 
 func drawMapMain(id int) {
-	Rect(-1, -1, sz(5)+1, sz(5)+1) //border
-	for i, v := range state.Map[id] {
+	Rect(-1, -1, sz(5)+1, sz(5)+1)    //border
+	for i, v := range state.Map[id] { //tiles
 		imageTable[v].DrawRect(sz(i%5), sz(i/5), sz(1), sz(1))
 	}
+	if gameOver { //gameover sign
+		Fill(dark)
+		//TextStyle(STYLE_BOLD)
+		Translate(-2, -2)
+		Text(GAME_OVER_SIGN, 0, 0, sz(5), sz(5))
+		Translate(4, 4)
+		Text(GAME_OVER_SIGN, 0, 0, sz(5), sz(5))
+		Translate(-2, -2)
+		Fill(bright)
+		TextStyle(STYLE_NORMAL)
+		Text(GAME_OVER_SIGN, 0, 0, sz(5), sz(5))
+	}
+
 }
 
 func data(method string, params url.Values) ([]byte, error) {
@@ -186,24 +207,34 @@ func doStart() {
 		for {
 			select {
 			case <-time.After(time.Second / 10):
-				doGetData()
+				switch doGetData() {
+				case GAME_OVER:
+					gameOver = true
+					break
+				}
 			}
 		}
 	}()
 }
 
-func doGetData() {
+func doGetData() int {
 	body, err := data("get", url.Values{"User": {"meow"}, "Token": {"coco"}})
 
 	if err != nil {
-		panic(fmt.Sprintf("Could not fetch data: %v", err))
+		return NETWORK_ERROR
+	}
+
+	fmt.Println(string(body))
+
+	if string(body) == "DESTROYED" {
+		return GAME_OVER
 	}
 
 	newState := entities.JSONOutput{}
 	err = json.Unmarshal(body, &newState)
 
 	if err != nil {
-		panic(fmt.Sprintf("Could not decode request: %v", err))
+		return NETWORK_ERROR
 	}
 
 	lock.Lock()
@@ -212,4 +243,5 @@ func doGetData() {
 
 	//fmt.Printf("Got data %+v\n", state)
 
+	return OK
 }
