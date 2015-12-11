@@ -19,6 +19,7 @@ var Handlers = map[string]InstHandler{
 	"DEC": Dec,
 	"MUL": Mul,
 	"DIV": Div,
+	"MOD": Mod,
 	// Logic instructions
 	"AND": And,
 	"OR":  Or,
@@ -71,6 +72,7 @@ var RetInstructions = map[string]bool{
 	"DEC": true,
 	"MUL": true,
 	"DIV": true,
+	"MOD": true,
 	"AND": true,
 	"OR":  true,
 	"XOR": true,
@@ -373,7 +375,19 @@ func Div(state *State, inst Instruction) {
 		state.Reg[RF] |= (1 << F_FAULT)
 	} else {
 		*inst.RetPtr = state.flagResult(int(inst.Args[0]) / int(inst.Args[1]))
-		state.Reg[RA] = (byte)(int(inst.Args[0]) % int(inst.Args[1]))
+	}
+}
+
+func Mod(state *State, inst Instruction) {
+	first := inst.Args[0]
+	second := inst.Args[1]
+	state.flagArgs(first, second)
+
+	if inst.Args[1] == 0 {
+		// Divide by zero fault
+		state.Reg[RF] |= (1 << F_FAULT)
+	} else {
+		*inst.RetPtr = state.flagResult((int(inst.Args[0]) % int(inst.Args[1])))
 	}
 }
 

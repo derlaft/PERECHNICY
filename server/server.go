@@ -9,6 +9,7 @@ import (
 	. "../stuff"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	//_ "net/http/pprof"
 	"os"
@@ -39,6 +40,8 @@ func (u *User) progPath() string {
 
 func Serve(addr string) {
 
+	rand.Seed(time.Now().UnixNano())
+
 	game = NewGame()
 	ctl = EntityControl{bots: make(Bots)}
 
@@ -55,7 +58,7 @@ func Serve(addr string) {
 func gameLoop() {
 	for {
 		select {
-		case <-time.After(time.Second / 10):
+		case <-time.After(time.Second / 100):
 
 			game.Tick()
 		}

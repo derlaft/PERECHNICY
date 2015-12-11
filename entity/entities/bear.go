@@ -27,7 +27,7 @@ func (b *Bear) OnDamage(c *Control, dmg uint) {
 }
 
 func (b *Bear) Tick(c *Control) {
-	b.tick = (b.tick + 1) % 10
+	b.tick = (b.tick + 1) % 100
 
 	if b.tick == 0 {
 		c.Move(c.Location.Add(Point{

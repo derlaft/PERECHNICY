@@ -24,7 +24,7 @@ const (
 	VIDEO_SIZE      = 5
 	QSZ             = VIDEO_SIZE * VIDEO_SIZE
 	MOVEMENT_AP     = 5
-	ENERGY_START    = 100
+	ENERGY_START    = 10000
 )
 
 type Interrupt func(*Bot, *Control)
