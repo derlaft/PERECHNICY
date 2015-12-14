@@ -2,7 +2,6 @@ package chunk
 
 import (
 	. "../stuff"
-	"math/rand"
 	"sync"
 )
 
@@ -86,13 +85,14 @@ func (m *Map) OutOfBorder(pt Point) bool {
 
 // generate chunk
 func (m *Map) GenChunk(pt Point) *Chunk {
+
 	chunk := &Chunk{}
 
 	for i, row := range chunk.Data {
 		for j := range row {
 			if !m.OutOfBorder(pt) {
 				// no need to lock chunk here: it's not linked to Chunks
-				chunk.Data[i][j] = (1 - byte(float64(rand.Intn(100))*0.011))
+				chunk.Data[i][j] = 0
 			} else {
 				chunk.Data[i][j] = 9
 			}
@@ -101,5 +101,6 @@ func (m *Map) GenChunk(pt Point) *Chunk {
 	m.Lock()
 	m.Chunks[pt] = chunk
 	m.Unlock()
+
 	return chunk
 }

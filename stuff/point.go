@@ -46,6 +46,18 @@ func MinMaxPoint(p1, p2 Point) (min, max Point) {
 		Point{Max(p1.X, p2.X), Max(p1.Y, p2.Y)}
 }
 
+func EachPoint_(p1, p2 Point) []*Point {
+  from, to := MinMaxPoint(p1, p2)
+  ret := make([]*Point, 0, (to.X-from.X)*(to.Y-from.Y))
+
+  for i := from.Y; i <= to.Y; i++ {
+    for j := from.X; j <= to.X; j++ {
+      ret = append(ret, &Point{j, i})
+    }
+  }
+	return ret
+}
+
 func EachPoint(p1, p2 Point) chan *Point {
 	c := make(chan *Point)
 

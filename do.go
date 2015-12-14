@@ -1,8 +1,6 @@
 package main
 
 import (
-	. "./chunk"
-	. "./game"
 	"./server"
 	"fmt"
 )
@@ -17,4 +15,5 @@ func main() {
 
 	fmt.Println("Start server")
 	server.Serve("127.0.0.1:4242")
+
 }

@@ -23,18 +23,13 @@ type Control struct {
 	Destroyed bool
 }
 
-type Entities map[key]*Control
+type Entities []*Control
 
 type Game struct {
 	World    *Map
 	Entities Entities
 	sync.RWMutex
 	EvHandler EventInterface
-}
-
-type key struct {
-	Chunk    *Chunk
-	Location Point
 }
 
 type EventInterface interface {
@@ -49,7 +44,8 @@ func NewEntity(game *Game, l Point, entity Entity) (*Control, bool) {
 		Entity:   entity,
 	}
 
-	//I suggest to use special spawner block for creating entities
+	game.Entities = append(game.Entities, ctl)
+
 	if !ctl.Move(l) {
 		return nil, false
 	}
@@ -63,14 +59,19 @@ func (g *Game) IsBlockSolid(pt Point) bool {
 
 func (g *Game) EntityAt(pt Point) *Control {
 	g.RLock()
-	ret := g.Entities[key{g.World.GetChunk(pt), pt}]
 	defer g.RUnlock()
-	return ret
+	for _, e := range g.Entities {
+		if e.Location == pt {
+			return e
+		}
+	}
+
+	return nil
 }
 
 func (g *Game) At(pt Point) byte {
 	g.RLock()
-	entity := g.Entities[key{g.World.GetChunk(pt), pt}]
+	entity := g.EntityAt(pt)
 	g.RUnlock()
 	if entity != nil {
 		return entity.Byte()
@@ -79,9 +80,6 @@ func (g *Game) At(pt Point) byte {
 }
 
 func (g *Game) Tick() {
-	//TODO: do smth with dat locks
-	//TODO: parallel tick handling
-	//TODO: and make it parallel
 	g.RLock()
 	for _, entity := range g.Entities {
 		g.RUnlock()
@@ -91,15 +89,30 @@ func (g *Game) Tick() {
 	g.RUnlock()
 }
 
-func (g *Game) getKey(l Point) *key {
-	return &key{g.World.GetChunk(l), l}
+func (g *Game) deleteEntity(e *Control) {
+	i := 0
+	a := g.Entities
+
+	for i < len(a) && a[i] != e {
+		i++
+	}
+
+	if i < len(a) && a[i] == e {
+
+		if len(a) > 1 {
+			a[i] = a[len(a)-1]
+			a[len(a)-1] = nil
+			a = a[:len(a)-1]
+		} else {
+			a = make([]*Control, 0)
+		}
+	}
+
+	g.Entities = a
 }
 
 // Yes, the only supported movement type is teleporting, lol
 func (c *Control) Move(next Point) bool {
-
-	movedFrom := c.Game.getKey(c.Location)
-	movedTo := c.Game.getKey(next)
 
 	c.Game.RLock()
 	entityAt := c.Game.EntityAt(next)
@@ -107,11 +120,9 @@ func (c *Control) Move(next Point) bool {
 
 	if !c.Game.IsBlockSolid(next) && entityAt == nil {
 		c.Game.Lock()
-		delete(c.Game.Entities, *movedFrom)
-		c.Game.Entities[*movedTo] = c
 		c.Game.Unlock()
-
 		c.Location = next
+
 		c.Game.EvHandler.SendEvent(EVENT_ENTITY_ON, next, c)
 
 		return true
@@ -127,7 +138,14 @@ func (c *Control) Move(next Point) bool {
 
 func (c *Control) Destroy() {
 	c.Destroyed = true
-	delete(c.Game.Entities, *c.Game.getKey(c.Location))
+	c.Game.Lock()
+	c.Game.Delete(c)
+	c.Game.Unlock()
+}
+
+func (g *Game) Delete(c *Control) {
+	g.deleteEntity(c)
+	c.Destroyed = true
 }
 
 func (e *Control) Byte() byte {
@@ -160,4 +178,10 @@ func (g *Game) Dump(from, to Point) (out string) {
 	}
 
 	return
+}
+
+func NewGame(w *Map, h EventInterface) *Game {
+	g := &Game{World: w, Entities: make(Entities, 0), EvHandler: h}
+	g.World.At(Point{0, 0})
+	return g
 }

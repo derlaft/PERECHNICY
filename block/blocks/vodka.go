@@ -20,9 +20,9 @@ func (g Vodka) SolidFor(c *Control) bool {
 
 func (g Vodka) Listeners() map[int]Listener {
 
-	return map[int]Listener{
+	return nil //map[int]Listener{
 	//		EVENT_ENTITY_ON: drainVodka,
-	}
+	//}
 
 }
 

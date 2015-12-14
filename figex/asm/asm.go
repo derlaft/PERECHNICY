@@ -65,25 +65,25 @@ var Handlers = map[string]InstHandler{
 }
 
 // Instruction that changes first operand (return values)
-var RetInstructions = map[string]bool{
-	"ADD": true,
-	"SUB": true,
-	"INC": true,
-	"DEC": true,
-	"MUL": true,
-	"DIV": true,
-	"MOD": true,
-	"AND": true,
-	"OR":  true,
-	"XOR": true,
-	"NOT": true,
-	"ROL": true,
-	"ROR": true,
-	"RCL": true,
-	"RCR": true,
-	"MOV": true,
-	"LD":  true,
-	"POP": true,
+var RetInstructions = []string{
+	"ADD",
+	"SUB",
+	"INC",
+	"DEC",
+	"MUL",
+	"DIV",
+	"MOD",
+	"AND",
+	"OR",
+	"XOR",
+	"NOT",
+	"ROL",
+	"ROR",
+	"RCL",
+	"RCR",
+	"MOV",
+	"LD",
+	"POP",
 }
 
 // Instruction argument
@@ -135,8 +135,10 @@ func (cmd *Command) toInstruction(state *State) Instruction {
 		}
 	}
 
-	if RetInstructions[cmd.InstName] && inst.RetPtr == nil {
-		inst.handler = Flt
+	for _, v := range RetInstructions {
+		if v == cmd.InstName && inst.RetPtr == nil {
+			inst.handler = Flt
+		}
 	}
 
 	return inst

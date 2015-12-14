@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	//_ "net/http/pprof"
 	"os"
 	"path"
 	"sync"
@@ -42,7 +41,7 @@ func Serve(addr string) {
 
 	rand.Seed(time.Now().UnixNano())
 
-	game = NewGame()
+	game = NewGame(NewMap(1), block.EventHandler{})
 	ctl = EntityControl{bots: make(Bots)}
 
 	game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
@@ -53,16 +52,33 @@ func Serve(addr string) {
 	http.HandleFunc("/upload", upload)
 	http.HandleFunc("/get", get)
 	http.ListenAndServe(addr, nil)
+
+	NewEntity(game, Point{2, 2}, &Bear{})
+	NewEntity(game, Point{2, 3}, &Bear{})
+	NewEntity(game, Point{2, 4}, &Bear{})
+	NewEntity(game, Point{2, 5}, &Bear{})
+	NewEntity(game, Point{2, 6}, &Bear{})
 }
 
 func gameLoop() {
+	ticks := uint64(0)
+	diff := int64(0)
+
 	for {
 		select {
 		case <-time.After(time.Second / 100):
-
+			diff -= time.Now().UnixNano()
 			game.Tick()
+			diff += time.Now().UnixNano()
+			ticks += 1
+			if diff >= 1000 {
+				fmt.Printf("%v\r", ticks)
+				ticks = 0
+				diff = 0
+			}
 		}
 	}
+
 }
 
 func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
@@ -97,12 +113,6 @@ func start(w http.ResponseWriter, r *http.Request) {
 	ctl.Lock()
 	ctl.bots[*user] = bot
 	ctl.Unlock()
-
-	NewEntity(game, Point{2, 2}, &Bear{})
-	NewEntity(game, Point{2, 3}, &Bear{})
-	NewEntity(game, Point{2, 4}, &Bear{})
-	NewEntity(game, Point{2, 5}, &Bear{})
-	NewEntity(game, Point{2, 6}, &Bear{})
 
 	fmt.Fprintf(w, "OK")
 }
@@ -148,10 +158,6 @@ func get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "%s\n", bot.Entity.(*Bot).JSON(bot))
-}
-
-func NewGame() *Game {
-	return &Game{World: NewMap(1), Entities: make(Entities), EvHandler: block.EventHandler{}}
 }
 
 func getBot(user *User) *Control {

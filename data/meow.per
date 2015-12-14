@@ -4,8 +4,14 @@ LOOP:
   INT &2
   CAL :FINDBEAR
   INT &1
+  JF :INC
+BACK:
   INT &2
   JMP :LOOP
+
+INC:
+  INC R0
+  JMP :BACK
 
 FINDBEAR:
     MOV RC   &0
