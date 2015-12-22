@@ -12,6 +12,7 @@ var (
 	handlers map[byte]Interrupt = map[byte]Interrupt{
 		0x01: MoveInt,
 		0x02: ScanInt,
+		0xf0: AttackInt,
 	}
 )
 
@@ -23,8 +24,10 @@ const (
 	DIRECTION_LEFT  = 3
 	VIDEO_SIZE      = 5
 	QSZ             = VIDEO_SIZE * VIDEO_SIZE
-	MOVEMENT_AP     = 5
+	MOVEMENT_AP     = 1
 	ENERGY_START    = 10000
+	BOT_DAMAGE      = 4
+	HP_START        = 100
 )
 
 type Interrupt func(*Bot, *Control)
@@ -33,6 +36,7 @@ type Bot struct {
 	Prog   *mio.Prog
 	Energy uint
 	AP     uint
+	HP     uint
 }
 
 type JSONOutput struct {
@@ -45,20 +49,21 @@ type JSONOutput struct {
 	Map    [3][VIDEO_SIZE * VIDEO_SIZE]byte
 }
 
-func NewBot(prog mio.Prog) *Bot {
+func NewBot(prog *mio.Prog) *Bot {
 	bot := Bot{
-		Prog:   &prog,
+		Prog:   prog,
 		Energy: ENERGY_START,
+		HP:     HP_START,
 	}
 	return &bot
 }
 
 func (b *Bot) Health() uint {
-	return 42
+	return b.HP
 }
 
 func (b *Bot) OnDamage(c *Control, dmg uint) {
-	return
+	b.HP = uint(Max(0, int(b.HP)-int(dmg)))
 }
 
 func (b *Bot) Tick(c *Control) {
@@ -66,9 +71,9 @@ func (b *Bot) Tick(c *Control) {
 	inc, max := b.APParams(c)
 
 	b.AP = (b.AP + inc) % max
-	b.Energy -= 1
+	b.Energy -= 0
 
-	if b.Energy == 0 {
+	if b.Energy == 0 || b.HP == 0 {
 		//self-destruct
 		c.Destroy()
 	}
@@ -147,6 +152,19 @@ func memcpy(arr []byte, from, to, n int) {
 	for i := 0; i < n && from+i < len(arr) && to+i < len(arr); i++ {
 		arr[to+i] = arr[from+i]
 	}
+}
+
+func AttackInt(b *Bot, c *Control) {
+	for pt := range EachPoint(
+		c.Location.Add(Point{-1, -1}),
+		c.Location.Add(Point{+1, +1}),
+	) {
+		e := c.Game.EntityAt(*pt)
+		if e != nil {
+			e.Entity.OnDamage(e, BOT_DAMAGE)
+		}
+	}
+
 }
 
 func ScanInt(b *Bot, c *Control) {

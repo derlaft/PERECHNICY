@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -23,6 +24,10 @@ var (
 	imageTable map[byte]*Image
 	scale      int  = 32
 	gameOver   bool = false
+
+	prog     = "./examples/meow.per"
+	username = "meow"
+	token    = ""
 )
 
 const (
@@ -69,7 +74,7 @@ func (s sketch) Setup() {
 	Fill(dark)
 	Stroke(border)
 
-	go doStart()
+	go doRegister()
 }
 
 func addTile(id byte) {
@@ -85,11 +90,11 @@ func (s sketch) Draw() {
 
 	Background(dark)
 
-	lock.Lock()
+	//lock.Lock()
 	drawState(sz(1)/2, sz(1)/2)
 	drawRegisters(sz(5)/7, sz(8)-sz(1)/2)
 	drawMap(sz(4), sz(2))
-	lock.Unlock()
+	//lock.Unlock()
 }
 
 func drawTable(table [][]string, colw int) {
@@ -197,10 +202,27 @@ func data(method string, params url.Values) ([]byte, error) {
 }
 
 func doStart() {
-	body, err := data("start", url.Values{"User": {"meow"}, "Token": {"coco"}})
+
+	f, err := os.Open(prog)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	progData, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+
+	body, err := data("start", url.Values{
+		"User":  {username},
+		"Token": {token},
+		"Prog":  {string(progData)},
+	})
 
 	if err != nil || string(body) != "OK" {
-		fmt.Println("Could not register (error is %v, response is %v)", err, string(body))
+		fmt.Printf(`Could not upload (error is "%v", response is "%v")\n`, err, string(body))
+		return
 	}
 
 	go func() {
@@ -217,8 +239,37 @@ func doStart() {
 	}()
 }
 
+type tokenResult struct {
+	Token string
+}
+
+func doRegister() {
+	body, err := data("register", url.Values{"User": {username}})
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while fetching: %v", err)
+		return
+	}
+
+	if string(body) == "FAILED" {
+		fmt.Fprintf(os.Stderr, "Failed to register\n")
+		return
+	}
+
+	tr := tokenResult{}
+	err = json.Unmarshal(body, &tr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error while decoding: %v", err)
+		return
+	}
+
+	token = tr.Token
+	fmt.Println("token is", token)
+	doStart()
+}
+
 func doGetData() int {
-	body, err := data("get", url.Values{"User": {"meow"}, "Token": {"coco"}})
+	body, err := data("get", url.Values{"User": {username}, "Token": {token}})
 
 	if err != nil {
 		return NETWORK_ERROR

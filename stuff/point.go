@@ -27,34 +27,20 @@ func (p Point) Dist(q Point) int {
 	return sqrt64((p.X-q.X)*(p.X-q.X) + (p.Y-q.Y)*(p.Y-q.Y))
 }
 
-func Min(a, b int64) int64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func Max(a, b int64) int64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func MinMaxPoint(p1, p2 Point) (min, max Point) {
-	return Point{Min(p1.X, p2.X), Min(p1.Y, p2.Y)},
-		Point{Max(p1.X, p2.X), Max(p1.Y, p2.Y)}
+	return Point{Min64(p1.X, p2.X), Min64(p1.Y, p2.Y)},
+		Point{Max64(p1.X, p2.X), Max64(p1.Y, p2.Y)}
 }
 
 func EachPoint_(p1, p2 Point) []*Point {
-  from, to := MinMaxPoint(p1, p2)
-  ret := make([]*Point, 0, (to.X-from.X)*(to.Y-from.Y))
+	from, to := MinMaxPoint(p1, p2)
+	ret := make([]*Point, 0, (to.X-from.X)*(to.Y-from.Y))
 
-  for i := from.Y; i <= to.Y; i++ {
-    for j := from.X; j <= to.X; j++ {
-      ret = append(ret, &Point{j, i})
-    }
-  }
+	for i := from.Y; i <= to.Y; i++ {
+		for j := from.X; j <= to.X; j++ {
+			ret = append(ret, &Point{j, i})
+		}
+	}
 	return ret
 }
 

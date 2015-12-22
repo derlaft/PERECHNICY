@@ -7,22 +7,30 @@ import (
 	"../figex/mio"
 	. "../game"
 	. "../stuff"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
-	"io/ioutil"
-	"math/rand"
+	mrand "math/rand"
 	"net/http"
 	"os"
-	"path"
 	"sync"
 	"time"
 )
 
 var (
-	game *Game
-	ctl  EntityControl
+	game   *Game
+	ctl    EntityControl
+	Progs  ProgDB
+	Tokens TokenDB
+)
+
+const (
+	TOKEN_SIZE = 20
 )
 
 type Bots map[User]*Control
+type ProgDB map[User]*mio.Prog
+type TokenDB map[User]string
 
 type EntityControl struct {
 	bots Bots
@@ -33,13 +41,23 @@ type User struct {
 	Name string
 }
 
-func (u *User) progPath() string {
-	return "./data/" + path.Base(u.Name) + ".per"
+func Serve(addr string) {
+	Progs = make(ProgDB)
+	Tokens = make(TokenDB)
+
+	gameInit()
+	httpInit(addr)
 }
 
-func Serve(addr string) {
+func httpInit(addr string) {
+	http.HandleFunc("/start", start)
+	http.HandleFunc("/register", register)
+	http.HandleFunc("/get", get)
+	http.ListenAndServe(addr, nil)
+}
 
-	rand.Seed(time.Now().UnixNano())
+func gameInit() {
+	mrand.Seed(time.Now().UnixNano())
 
 	game = NewGame(NewMap(1), block.EventHandler{})
 	ctl = EntityControl{bots: make(Bots)}
@@ -47,17 +65,7 @@ func Serve(addr string) {
 	game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
 	go gameLoop()
 
-	http.Handle("/", http.FileServer(http.Dir("jsfrontend")))
-	http.HandleFunc("/start", start)
-	http.HandleFunc("/upload", upload)
-	http.HandleFunc("/get", get)
-	http.ListenAndServe(addr, nil)
-
 	NewEntity(game, Point{2, 2}, &Bear{})
-	NewEntity(game, Point{2, 3}, &Bear{})
-	NewEntity(game, Point{2, 4}, &Bear{})
-	NewEntity(game, Point{2, 5}, &Bear{})
-	NewEntity(game, Point{2, 6}, &Bear{})
 }
 
 func gameLoop() {
@@ -83,6 +91,8 @@ func gameLoop() {
 
 func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
 
+	r.ParseMultipartForm(32 << 20)
+
 	user, token := r.FormValue("User"), r.FormValue("Token")
 
 	if user == "" || token == "" {
@@ -92,6 +102,25 @@ func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
 	}
 
 	return &User{Name: user}, true
+}
+
+func register(w http.ResponseWriter, r *http.Request) {
+	user := User{Name: r.FormValue("User")}
+
+	_, registered := Tokens[user]
+	if !registered {
+		newtoken, err := randToken()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to gen token: %v", err)
+			fmt.Fprintf(w, "FAILED")
+			return
+		}
+		fmt.Fprintf(w, `{"token": "%v"}`, newtoken)
+		Tokens[user] = newtoken
+		return
+	}
+
+	fmt.Fprintf(w, "FAILED")
 }
 
 func start(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +137,9 @@ func start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	prog := r.FormValue("Prog")
+	user.addProg(prog)
+
 	// start
 	bot = getBot(user)
 	ctl.Lock()
@@ -122,24 +154,6 @@ func (c *EntityControl) get(u User) (*Control, bool) {
 	bot, exists := ctl.bots[u]
 	ctl.RUnlock()
 	return bot, exists
-}
-
-func upload(w http.ResponseWriter, r *http.Request) {
-	user, ok := checkAuth(w, r)
-	if !ok {
-		return
-	}
-
-	prog := r.FormValue("PROG")
-	err := ioutil.WriteFile(user.progPath(), []byte(prog), 0600)
-
-	if err != nil {
-		fmt.Fprintf(w, "ERROR\n")
-		fmt.Fprintf(os.Stderr, "ERROR %v\n", err)
-	}
-
-	fmt.Fprintf(w, "OK, %+v\n", user)
-
 }
 
 func get(w http.ResponseWriter, r *http.Request) {
@@ -161,9 +175,9 @@ func get(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBot(user *User) *Control {
-	prog, err := mio.ProgFromFile(user.progPath())
-	if err != nil {
-		panic(err)
+	prog, found := Progs[*user]
+	if !found {
+		panic("Prog not found")
 	}
 	fmt.Fprintf(os.Stderr, "Spawned bot for %v\n", user.Name)
 
@@ -171,4 +185,20 @@ func getBot(user *User) *Control {
 	control, _ := NewEntity(game, Point{1, 1}, NewBot(prog))
 	return control
 
+}
+
+func (u *User) addProg(p string) error {
+	prog, err := mio.ProgFromString(p)
+	Progs[*u] = prog
+	return err
+}
+
+func randToken() (string, error) {
+	var buf [TOKEN_SIZE]byte
+	_, err := rand.Read(buf[:])
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(buf[:]), nil
 }

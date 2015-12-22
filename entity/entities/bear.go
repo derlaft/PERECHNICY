@@ -11,23 +11,24 @@ const (
 )
 
 type Bear struct {
+	hp   uint
 	tick uint
 }
 
 func (b *Bear) Init(c *Control) {
-
+	b.hp = 1
 }
 
 func (b *Bear) Health() uint {
-	return 42
+	return b.hp
 }
 
 func (b *Bear) OnDamage(c *Control, dmg uint) {
-	return
+	b.hp = uint(Max(0, int(b.hp)-int(dmg)))
 }
 
 func (b *Bear) Tick(c *Control) {
-	b.tick = (b.tick + 1) % 100
+	b.tick = (b.tick + 1) % 250
 
 	if b.tick == 0 {
 		c.Move(c.Location.Add(Point{

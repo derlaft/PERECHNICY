@@ -26,15 +26,8 @@ const (
 	OP_NOP      = -1
 )
 
-func readLines(path string) (str []string, err error) {
+func readLines(file *os.File) (str []string, err error) {
 	str = make([]string, 512, MAXLEN)
-
-	file, err := os.Open(path)
-
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
@@ -46,17 +39,40 @@ func readLines(path string) (str []string, err error) {
 	return str[:n], nil
 }
 
-func ProgFromFile(path string) (prog Prog, err error) {
-	str, e := readLines(path)
+func ProgFromFile(path string) (prog *Prog, err error) {
+	file, err := os.Open(path)
+	defer file.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	str, e := readLines(file)
 
 	if e != nil {
-		return Prog{}, e
+		return &Prog{}, e
 	}
 
 	return preprocess(str), nil
 }
 
-func preprocess(str []string) (prog Prog) {
+func ProgFromFD(fd *os.File) (prog *Prog, err error) {
+	str, e := readLines(fd)
+
+	if e != nil {
+		return &Prog{}, e
+	}
+
+	return preprocess(str), nil
+}
+
+func ProgFromString(s string) (prog *Prog, err error) {
+	return preprocess(strings.Split(s, "\n")), nil
+}
+
+func preprocess(str []string) *Prog {
+	prog := &Prog{}
+
 	prog.Const = make(map[string]int)
 	prog.Prog = make([]Command, 64, MAXLEN)
 
@@ -87,7 +103,7 @@ func preprocess(str []string) (prog Prog) {
 	for _, s := range str {
 		tokens := tokenize(s)
 		if argType(tokens) == OP_OP && isRealOp(tokens[0]) {
-			prog.Prog[n] = parseOp(&prog, tokens)
+			prog.Prog[n] = parseOp(prog, tokens)
 			n += 1
 		}
 	}
@@ -189,7 +205,7 @@ func push(a *Command, t byte, val int) {
 }
 
 func getInt(arg string) (byte, error) {
-	i, err := strconv.ParseInt(arg[1:], 16, 8)
+	i, err := strconv.ParseInt(arg[1:], 16, 16)
 	return byte(i), err
 }
 
