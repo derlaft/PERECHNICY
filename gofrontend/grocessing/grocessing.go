@@ -15,6 +15,7 @@ var (
 	window   *sdl.Window
 	renderer *sdl.Renderer
 	font     *ttf.Font
+	KeyCode  uint32
 
 	fpsCap    uint = 30
 	frames    uint
@@ -33,6 +34,10 @@ var (
 const (
 	STYLE_NORMAL = iota
 	STYLE_BOLD
+
+	KEY_UP     = uint32(sdl.K_UP)
+	KEY_DOWN   = uint32(sdl.K_DOWN)
+	KEY_RETURN = uint32(sdl.K_RETURN)
 )
 
 type Matrix struct {
@@ -55,6 +60,7 @@ type Image struct {
 type Sketch interface {
 	Setup()
 	Draw()
+	KeyPressed()
 }
 
 func GrocessingStart(s Sketch) {
@@ -100,26 +106,29 @@ func GrocessingStart(s Sketch) {
 			}
 			frames++
 
+			checkEvent()
+
 			if frames < 1000/fpsCap {
 				sdl.Delay(uint32(1000/fpsCap - frames))
-			}
-		}
-	}()
-	//event routine
-	go func() {
-		for {
-			for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-				switch event.(type) {
-				case *sdl.QuitEvent:
-					fmt.Println("EXIT")
-					stop <- true
-				}
 			}
 		}
 	}()
 
 	<-stop
 	os.Exit(0)
+}
+
+func checkEvent() {
+	for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
+		switch t := event.(type) {
+		case *sdl.QuitEvent:
+			fmt.Println("EXIT")
+			stop <- true
+		case *sdl.KeyDownEvent:
+			KeyCode = uint32(t.Keysym.Sym)
+			sketch.KeyPressed()
+		}
+	}
 }
 
 func default_matrix() *Matrix {
