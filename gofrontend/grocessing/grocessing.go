@@ -106,7 +106,7 @@ func GrocessingStart(s Sketch) {
 			}
 			frames++
 
-			checkEvent()
+			go checkEvent()
 
 			if frames < 1000/fpsCap {
 				sdl.Delay(uint32(1000/fpsCap - frames))
