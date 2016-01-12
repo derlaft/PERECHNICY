@@ -14,6 +14,6 @@ import (
 func main() {
 
 	fmt.Println("Start server")
-	server.Serve("127.0.0.1:4242")
+	server.Serve("0.0.0.0:4242")
 
 }

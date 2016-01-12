@@ -200,11 +200,18 @@ func (b *Bot) OnColission(me, he *Control) {
 
 }
 
+func (b *Bot) instName() string {
+	if len(b.Prog.Prog) <= b.Prog.State.IP {
+		return ""
+	}
+	return b.Prog.Prog[b.Prog.State.IP].InstName
+}
+
 func (b *Bot) JSON(c *Control) []byte {
 	out := JSONOutput{
 		Reg:    b.Prog.State.Reg,
 		IP:     b.Prog.State.IP,
-		Inst:   b.Prog.Prog[b.Prog.State.IP].InstName,
+		Inst:   b.instName(),
 		Map:    [3][VIDEO_SIZE * VIDEO_SIZE]byte{},
 		Health: b.Health(),
 		Energy: b.Energy,

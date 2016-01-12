@@ -106,6 +106,7 @@ func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
 
 func register(w http.ResponseWriter, r *http.Request) {
 	user := User{Name: r.FormValue("User")}
+	fmt.Println("COCO", user.Name+"\n\n\n")
 
 	_, registered := Tokens[user]
 	if !registered {
@@ -146,7 +147,7 @@ func start(w http.ResponseWriter, r *http.Request) {
 	ctl.bots[*user] = bot
 	ctl.Unlock()
 
-	fmt.Fprintf(w, "OK")
+	fmt.Fprintf(w, `{"result": "OK"}`)
 }
 
 func (c *EntityControl) get(u User) (*Control, bool) {

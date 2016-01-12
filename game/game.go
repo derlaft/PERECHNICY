@@ -153,6 +153,12 @@ func (e *Control) Byte() byte {
 }
 
 func (e *Control) Tick() {
+	//TODO: check why it's needed
+	//howto reproduce: die near another bot
+	if e == nil || e.Destroyed {
+		fmt.Println("WAAT")
+		return
+	}
 	e.Entity.Tick(e)
 }
 

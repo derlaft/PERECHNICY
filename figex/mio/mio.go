@@ -211,6 +211,10 @@ func getInt(arg string) (byte, error) {
 
 func (prog *Prog) Tick() *byte {
 
+	if len(prog.Prog) == 0 {
+		return nil
+	}
+
 	args := prog.Prog[prog.State.IP]
 	prog.State.Cycle(args)
 

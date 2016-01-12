@@ -37,7 +37,12 @@ const (
 
 	KEY_UP     = uint32(sdl.K_UP)
 	KEY_DOWN   = uint32(sdl.K_DOWN)
+	KEY_LEFT   = uint32(sdl.K_LEFT)
+	KEY_RIGHT  = uint32(sdl.K_RIGHT)
 	KEY_RETURN = uint32(sdl.K_RETURN)
+
+	ALIGN_CENTER = iota
+	ALIGN_LEFT
 )
 
 type Matrix struct {
@@ -46,6 +51,7 @@ type Matrix struct {
 	draw_stroke bool
 	draw_fill   bool
 	textStyle   int
+	textAlign   int
 	x, y        int
 }
 
@@ -227,6 +233,10 @@ func Rect(x, y, w, h int) {
 
 }
 
+func TextAlign(a int) {
+	m.textAlign = a
+}
+
 func Text(txt string, x, y, w, h int) {
 	var (
 		surface *sdl.Surface
@@ -248,14 +258,27 @@ func Text(txt string, x, y, w, h int) {
 	}
 
 	rw, rh, err := font.SizeUTF8(txt)
-	r := &sdl.Rect{
-		int32(m.x + x + (Max(rw, int(w))-Min(rw, int(w)))/2),
-		int32(m.y + y + (Max(rh, int(h))-Min(rh, int(h)))/2),
-		int32(rw),
-		int32(rh),
+	var r sdl.Rect
+
+	switch m.textAlign {
+	case ALIGN_CENTER:
+		r = sdl.Rect{
+			int32(m.x + x + (Max(rw, int(w))-Min(rw, int(w)))/2),
+			int32(m.y + y + (Max(rh, int(h))-Min(rh, int(h)))/2),
+			int32(rw),
+			int32(rh),
+		}
+	case ALIGN_LEFT:
+		r = sdl.Rect{
+			int32(m.x + x),
+			int32(m.y + y),
+			int32(rw),
+			int32(rh),
+		}
+
 	}
 
-	renderer.Copy(texture, nil, r)
+	renderer.Copy(texture, nil, &r)
 	texture.Destroy()
 }
 
