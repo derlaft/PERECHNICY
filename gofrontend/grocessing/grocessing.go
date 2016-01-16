@@ -242,6 +242,9 @@ func Text(txt string, x, y, w, h int) {
 		surface *sdl.Surface
 		err     error
 	)
+	if len(txt) == 0 {
+		return
+	}
 	switch m.textStyle {
 	case STYLE_NORMAL:
 		surface, err = font.RenderUTF8_Blended(txt, *m.fillColor)

@@ -5,21 +5,25 @@ import (
 	"../entity"
 	"../entity/entities"
 	. "./grocessing"
-	"encoding/json"
+	"./req"
 	"fmt"
+	"gopkg.in/gcfg.v1"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 var (
 	dark       Color = Hc(0x204631)
 	bright     Color = Hc(0xD7E894)
 	border     Color = Hc(0x527F39)
-	state      entities.JSONOutput
+	state      *entities.JSONOutput
 	lock       sync.Mutex
 	imageTable map[byte]*Image
 	scale      int = 32
@@ -29,23 +33,20 @@ var (
 
 	screen = LOGIN_SCREEN
 
-	SYMBOLS = []rune{
-		'_',
-		'A', 'D', 'E',
-		'F', 'G', 'I',
-		'K', 'L', 'O',
-		'P', 'R', 'S',
-		'T', 'U', 'X',
-		'2', '4', '7',
+	SYMBOLS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+	cursor  = 0
+	nick    = [NICK_LEN]rune{
+		'_', '_', '_', '_',
+		'_', '_', '_', '_',
 	}
-	cursor            = 0
-	nick              = [NICK_LEN]int{0}
-	connectStatus int = NOT_YET
+	connectStatus string = PRESS_ENTER
 )
 
 const (
 	SERVER_URL     = "http://127.0.0.1:4242/"
 	GAME_OVER_SIGN = "GAME OVER"
+	PRESS_ENTER    = "Press RETURN"
+	LINE_WIDTH     = 20
 
 	LOGIN_SCREEN = iota
 	GAME_SCREEN
@@ -56,10 +57,6 @@ const (
 	OK = iota
 	GAME_OVER
 	CONNECTING
-	NETWORK_ERROR
-	NOT_YET
-	BUSY
-	PROG_UPLOAD_FAILED
 	NICK_LEN = 8
 )
 
@@ -71,7 +68,20 @@ func sz(a int) int {
 }
 
 func main() {
+
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+	}
+	os.Chdir(dir)
+
 	GrocessingStart(sketch{})
+}
+
+func next(r rune, dx int) rune {
+	i := strings.Index(SYMBOLS, string(r))
+	ret := SYMBOLS[(len(SYMBOLS)+i+dx)%len(SYMBOLS)]
+	return rune(ret)
 }
 
 func (s sketch) KeyPressed() {
@@ -79,23 +89,35 @@ func (s sketch) KeyPressed() {
 	case LOGIN_SCREEN:
 		switch KeyCode {
 		case KEY_UP:
-			nick[cursor] = (nick[cursor] + 1) % len(SYMBOLS)
+			nick[cursor] = next(nick[cursor], -1)
 		case KEY_DOWN:
-			nick[cursor] = (nick[cursor] + len(SYMBOLS) - 1) % len(SYMBOLS)
+			nick[cursor] = next(nick[cursor], +1)
 		case KEY_LEFT:
 			cursor = (cursor + NICK_LEN - 1) % NICK_LEN
 		case KEY_RIGHT:
 			cursor = (cursor + 1) % NICK_LEN
 		case KEY_RETURN:
-			connectStatus = CONNECTING
+			connectStatus = "Connecting to the server..."
 			go doRegister()
+		default:
+			if KeyCode == ' ' {
+				KeyCode = '_'
+			}
+
+			if KeyCode >= 'a' && KeyCode <= 'z' ||
+				KeyCode >= '0' && KeyCode <= '9' ||
+				KeyCode == '_' {
+
+				nick[cursor] = unicode.ToUpper(rune(KeyCode))
+				cursor = (cursor + 1) % NICK_LEN
+			}
 		}
 
 	case GAME_SCREEN:
 		switch KeyCode {
 		case KEY_RETURN:
-			if connectStatus == GAME_OVER {
-				connectStatus = NOT_YET
+			if state.Destroyed {
+				connectStatus = PRESS_ENTER
 				screen = LOGIN_SCREEN
 			}
 		}
@@ -152,7 +174,7 @@ func (s sketch) Draw() {
 		//lock.Unlock()
 
 	case LOGIN_SCREEN:
-		drawInput(sz(0), sz(3))
+		drawInput(sz(0), sz(1))
 		//drawLoginStatus(sz(4), sz(4))
 
 	}
@@ -180,6 +202,11 @@ func drawTable(table [][]string, colw int) {
 }
 
 func drawState(x, y int) {
+	//@TODO: wat
+	if state == nil {
+		return
+	}
+
 	PushMatrix()
 	Translate(x, y)
 	Fill(dark)
@@ -200,7 +227,7 @@ func drawState(x, y int) {
 
 func getnick() (n string) {
 	for _, v := range nick {
-		n += string(SYMBOLS[v])
+		n += string(v)
 	}
 	return
 }
@@ -217,6 +244,7 @@ func getcursor() (n string) {
 }
 
 func drawInput(x, y int) {
+
 	PushMatrix()
 	Translate(x, y)
 	Fill(bright)
@@ -230,28 +258,17 @@ func drawInput(x, y int) {
 	Text(getcursor(), 0, sz(1)/2, sz(25), sz(1))
 
 	Translate(0, sz(1))
-	var t string
-	switch connectStatus {
-	case NOT_YET:
-		t = "Press ENTER"
-	case BUSY:
-		t = "Nickname BUSY"
-	case NETWORK_ERROR:
-		t = "Network ERR"
-	case PROG_UPLOAD_FAILED:
-		t = "Prog problemo"
-	case OK:
-		t = "Starting game..."
-	default:
-		t = "WAT"
-	}
 
-	Text(t, 0, sz(0), sz(25), sz(1))
+	for i := 0; i <= len(connectStatus)/LINE_WIDTH; i++ {
+		Text(connectStatus[i*LINE_WIDTH:Min(len(connectStatus), (i+1)*LINE_WIDTH)], 0, 0, sz(25), sz(1))
+		Translate(0, sz(1)/2)
+	}
 
 	PopMatrix()
 }
 
 func drawRegisters(x, y int) {
+
 	PushMatrix()
 	Translate(x, y)
 	Fill(dark)
@@ -268,6 +285,7 @@ func drawRegisters(x, y int) {
 }
 
 func drawMap(x, y int) {
+
 	PushMatrix()
 	Fill(dark)
 	Translate(x, y)
@@ -285,7 +303,7 @@ func drawMapMain(id int) {
 	for i, v := range state.Map[id] { //tiles
 		imageTable[v].DrawRect(sz(i%5), sz(i/5), sz(1), sz(1))
 	}
-	if connectStatus == GAME_OVER { //gameover sign
+	if state.Destroyed { //gameover sign
 		Fill(dark)
 		//TextStyle(STYLE_BOLD)
 		Translate(-2, -2)
@@ -320,40 +338,38 @@ func doStart() {
 	f, err := os.Open(prog)
 	defer f.Close()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, `Could not open prog (%v")\n`, err)
-		connectStatus = PROG_UPLOAD_FAILED
+		connectStatus = err.Error()
 		return
 	}
 
 	progData, err := ioutil.ReadAll(f)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, `Could not read prog (%v")\n`, err)
-		connectStatus = PROG_UPLOAD_FAILED
+		connectStatus = err.Error()
 		return
 	}
 
-	body, err := data("start", url.Values{
-		"User":  {getnick()},
-		"Token": {token},
-		"Prog":  {string(progData)},
-	})
-
-	if err != nil || string(body) != `{"result": "OK"}` {
-		fmt.Fprintf(os.Stderr, `Could not upload (error is "%v", response is "%v")\n`, err, string(body))
-		connectStatus = PROG_UPLOAD_FAILED
+	err = server.Start(string(progData))
+	if err != nil {
+		connectStatus = err.Error()
 		return
 	}
 
-	connectStatus = OK
 	screen = GAME_SCREEN
+	state = &entities.JSONOutput{}
 
 	go func() {
 		for {
 			select {
 			case <-time.After(time.Second / 10):
-				switch doGetData() {
-				case GAME_OVER:
-					connectStatus = GAME_OVER
+				newState, err := server.GetData()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "%v\n", err)
+				}
+				lock.Lock()
+				state = newState
+				lock.Unlock()
+
+				if state.Destroyed {
 					return
 				}
 			}
@@ -361,62 +377,23 @@ func doStart() {
 	}()
 }
 
-type tokenResult struct {
-	Token string
-}
+var (
+	server *req.Server
+)
 
 func doRegister() {
-	if token != "" {
+
+	server = req.NewServer(SERVER_URL, getnick(), token)
+	if server.Token != "" {
 		doStart()
 		return
 	}
 
-	body, err := data("register", url.Values{"User": {getnick()}})
-
+	err := server.Register()
 	if err != nil {
-		connectStatus = NETWORK_ERROR
+		connectStatus = err.Error()
 		return
 	}
 
-	if string(body) == "FAILED" {
-		connectStatus = BUSY
-		return
-	}
-
-	tr := tokenResult{}
-	err = json.Unmarshal(body, &tr)
-	if err != nil {
-		connectStatus = NETWORK_ERROR
-		return
-	}
-
-	token = tr.Token
 	doStart()
-}
-
-func doGetData() int {
-	body, err := data("get", url.Values{"User": {getnick()}, "Token": {token}})
-
-	if err != nil {
-		return NETWORK_ERROR
-	}
-
-	if string(body) == "DESTROYED" {
-		return GAME_OVER
-	}
-
-	newState := entities.JSONOutput{}
-	err = json.Unmarshal(body, &newState)
-
-	if err != nil {
-		return NETWORK_ERROR
-	}
-
-	lock.Lock()
-	state = newState
-	lock.Unlock()
-
-	//fmt.Printf("Got data %+v\n", state)
-
-	return OK
 }
