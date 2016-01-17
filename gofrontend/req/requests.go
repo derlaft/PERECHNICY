@@ -12,24 +12,68 @@ import (
 )
 
 type Server struct {
-	URL         string
+	URL string
+	Credentials
+}
+
+type Credentials struct {
 	User, Token string
+}
+
+func (c *Credentials) Save(filename string) error {
+	body, err := json.Marshal(c)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, body, 0600)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func Load(addr, filename string) (*Server, error) {
+	body, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	c := Credentials{}
+	err = json.Unmarshal(body, &c)
+
+	if err != nil {
+		return nil, err
+	}
+
+	s := &Server{addr, c}
+	s.Check()
+
+	return s, nil
 }
 
 func NewServer(addr, nick, token string) *Server {
 
 	s := &Server{
-		URL:   addr,
-		User:  nick,
-		Token: token,
+		addr,
+		Credentials{
+			User:  nick,
+			Token: token,
+		},
 	}
 
+	s.Check()
+
+	return s
+}
+
+func (s *Server) Check() {
 	ok, err := s.CheckLogin()
 	if err != nil || !ok {
 		s.Token = ""
 	}
 
-	return s
 }
 
 func (s *Server) request(method string, params url.Values) ([]byte, error) {

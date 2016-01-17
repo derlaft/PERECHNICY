@@ -40,13 +40,14 @@ type Bot struct {
 }
 
 type JSONOutput struct {
-	Reg    [16]byte
-	IP     int
-	Inst   string
-	Health uint
-	Energy uint
-	AP     uint
-	Map    [3][VIDEO_SIZE * VIDEO_SIZE]byte
+	Reg       [16]byte
+	IP        int
+	Inst      string
+	Health    uint
+	Energy    uint
+	AP        uint
+	Destroyed bool
+	Map       [3][VIDEO_SIZE * VIDEO_SIZE]byte
 }
 
 func NewBot(prog *mio.Prog) *Bot {
@@ -209,13 +210,14 @@ func (b *Bot) instName() string {
 
 func (b *Bot) JSON(c *Control) []byte {
 	out := JSONOutput{
-		Reg:    b.Prog.State.Reg,
-		IP:     b.Prog.State.IP,
-		Inst:   b.instName(),
-		Map:    [3][VIDEO_SIZE * VIDEO_SIZE]byte{},
-		Health: b.Health(),
-		Energy: b.Energy,
-		AP:     b.AP,
+		Reg:       b.Prog.State.Reg,
+		IP:        b.Prog.State.IP,
+		Inst:      b.instName(),
+		Map:       [3][VIDEO_SIZE * VIDEO_SIZE]byte{},
+		Health:    b.Health(),
+		Energy:    b.Energy,
+		AP:        b.AP,
+		Destroyed: c.Destroyed,
 	}
 
 	for i := 0; i < 3; i++ {

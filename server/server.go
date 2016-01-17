@@ -32,6 +32,15 @@ type Bots map[User]*Control
 type ProgDB map[User]*mio.Prog
 type TokenDB map[User]string
 
+type DB map[User]DBEntry
+
+type DBEntry struct {
+	Bot   *Control
+	Prog  *mio.Prog
+	Token string
+	sync.RWMutex
+}
+
 type EntityControl struct {
 	bots Bots
 	sync.RWMutex
@@ -53,6 +62,7 @@ func httpInit(addr string) {
 	http.HandleFunc("/start", start)
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/get", get)
+	http.HandleFunc("/ping", ping)
 	http.ListenAndServe(addr, nil)
 }
 
@@ -94,14 +104,14 @@ func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
 	r.ParseMultipartForm(32 << 20)
 
 	user, token := r.FormValue("User"), r.FormValue("Token")
+	userobj := User{Name: user}
 
-	if user == "" || token == "" {
-		//TODO: implement auth
-		fmt.Fprintf(w, "Bad auth")
+	if user == "" || Tokens[userobj] != token {
+		fmt.Fprintf(w, `{"Result": false, "Reason": "Bad auth"}`)
 		return nil, false
 	}
 
-	return &User{Name: user}, true
+	return &userobj, true
 }
 
 func register(w http.ResponseWriter, r *http.Request) {
@@ -111,17 +121,16 @@ func register(w http.ResponseWriter, r *http.Request) {
 	_, registered := Tokens[user]
 	if !registered {
 		newtoken, err := randToken()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to gen token: %v", err)
-			fmt.Fprintf(w, "FAILED")
+		if err == nil {
+			fmt.Fprintf(w, `{"Result": true, "Token": "%v"}`, newtoken)
+			Tokens[user] = newtoken
 			return
 		}
-		fmt.Fprintf(w, `{"token": "%v"}`, newtoken)
-		Tokens[user] = newtoken
-		return
+		//failed to generate token
+		fmt.Fprintf(w, `{"Result": false, "Reason": "Internal server error"}`)
+	} else {
+		fmt.Fprintf(w, `{"Result": false, "Reason": "Already registered"}`)
 	}
-
-	fmt.Fprintf(w, "FAILED")
 }
 
 func start(w http.ResponseWriter, r *http.Request) {
@@ -134,7 +143,8 @@ func start(w http.ResponseWriter, r *http.Request) {
 	// check if already started
 	bot, exists := ctl.get(*user)
 	if exists && !bot.Destroyed {
-		fmt.Fprintf(w, "EXISTS")
+		// setting result to true as we can still continue
+		fmt.Fprintf(w, `{"Result": true, "Reason": "Already exists"}`)
 		return
 	}
 
@@ -147,7 +157,18 @@ func start(w http.ResponseWriter, r *http.Request) {
 	ctl.bots[*user] = bot
 	ctl.Unlock()
 
-	fmt.Fprintf(w, `{"result": "OK"}`)
+	fmt.Fprintf(w, `{"Result": true}`)
+}
+
+func ping(w http.ResponseWriter, r *http.Request) {
+
+	_, ok := checkAuth(w, r)
+	if !ok {
+		fmt.Fprintf(w, `{"Result": false}`)
+		return
+	}
+
+	fmt.Fprintf(w, `{"Result": true}`)
 }
 
 func (c *EntityControl) get(u User) (*Control, bool) {
@@ -165,10 +186,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 
 	bot, exists := ctl.get(*user)
 	if bot == nil || !exists {
-		fmt.Fprintf(w, "NOT FOUND\n")
-		return
-	} else if bot.Destroyed {
-		fmt.Fprintf(w, "DESTROYED")
+		fmt.Fprintf(w, `{"Result": false, "Reason": "NOT FOUND"}`)
 		return
 	}
 

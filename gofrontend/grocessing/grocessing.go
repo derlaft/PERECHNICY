@@ -15,7 +15,7 @@ var (
 	window   *sdl.Window
 	renderer *sdl.Renderer
 	font     *ttf.Font
-	KeyCode  uint32
+	KeyCode  Key
 
 	fpsCap    uint = 30
 	frames    uint
@@ -35,11 +35,11 @@ const (
 	STYLE_NORMAL = iota
 	STYLE_BOLD
 
-	KEY_UP     = uint32(sdl.K_UP)
-	KEY_DOWN   = uint32(sdl.K_DOWN)
-	KEY_LEFT   = uint32(sdl.K_LEFT)
-	KEY_RIGHT  = uint32(sdl.K_RIGHT)
-	KEY_RETURN = uint32(sdl.K_RETURN)
+	KEY_UP     = Key(sdl.K_UP)
+	KEY_DOWN   = Key(sdl.K_DOWN)
+	KEY_LEFT   = Key(sdl.K_LEFT)
+	KEY_RIGHT  = Key(sdl.K_RIGHT)
+	KEY_RETURN = Key(sdl.K_RETURN)
 
 	ALIGN_CENTER = iota
 	ALIGN_LEFT
@@ -68,6 +68,8 @@ type Sketch interface {
 	Draw()
 	KeyPressed()
 }
+
+type Key uint32
 
 func GrocessingStart(s Sketch) {
 
@@ -131,7 +133,7 @@ func checkEvent() {
 			fmt.Println("EXIT")
 			stop <- true
 		case *sdl.KeyDownEvent:
-			KeyCode = uint32(t.Keysym.Sym)
+			KeyCode = Key(t.Keysym.Sym)
 			sketch.KeyPressed()
 		}
 	}
