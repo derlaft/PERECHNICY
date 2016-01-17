@@ -105,7 +105,12 @@ func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
 	user, token := r.FormValue("User"), r.FormValue("Token")
 	userobj := User{Name: user}
 
-	if user == "" || DB.DB[userobj].Token != token {
+	entry, exists := DB.DB[userobj]
+	entry.RLock()
+	good_token := entry.Token
+	entry.RUnlock()
+
+	if user == "" || !exists || token != good_token {
 		fmt.Fprintf(w, `{"Result": false, "Reason": "Bad auth"}`)
 		return nil, false
 	}
