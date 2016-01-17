@@ -29,15 +29,16 @@ const (
 )
 
 func init() {
-	stahp = make(chan bool)
+	stahp = make(chan bool, 1)
 
 	Forms[GAME_SCREEN] = GameForm{}
 }
 
 func (g GameForm) KeyDown(a Key) {
-	switch KeyCode {
+	switch a {
 	case KEY_RETURN:
 		if state.Destroyed {
+			fmt.Println("JUMPING")
 			Screen(LOGIN_SCREEN)
 		}
 	}
@@ -56,6 +57,8 @@ func (g GameForm) Start() {
 	}
 
 	state = &entities.JSONOutput{}
+	stahp = make(chan bool, 1)
+
 	for {
 		select {
 		case <-time.After(time.Second / 10):
