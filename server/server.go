@@ -9,10 +9,12 @@ import (
 	. "../stuff"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	mrand "math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -63,6 +65,7 @@ func httpInit(addr string) {
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/get", get)
 	http.HandleFunc("/ping", ping)
+	http.HandleFunc("/map", map_view)
 	http.ListenAndServe(addr, nil)
 }
 
@@ -170,6 +173,38 @@ func start(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"Result": true}`)
 }
 
+func map_view(w http.ResponseWriter, r *http.Request) {
+
+	x, err1 := strconv.ParseInt(r.FormValue("X"), 10, 64)
+	y, err2 := strconv.ParseInt(r.FormValue("Y"), 10, 64)
+	width, err3 := strconv.ParseInt(r.FormValue("W"), 10, 64)
+	height, err4 := strconv.ParseInt(r.FormValue("H"), 10, 64)
+
+	if err1 != nil || err2 != nil || err3 != nil || err4 != nil {
+		fmt.Fprintf(w, `[]`)
+		return
+	}
+
+	from := Point{x, y}
+	to := Point{x + width - 1, y + height - 1}
+	len := (width) * (height)
+	out := make([]int, len, len)
+	i := 0
+
+	for pt := range EachPoint(from, to) {
+		out[i] = int(game.At(*pt))
+		i += 1
+	}
+
+	ret, err := json.Marshal(out)
+	if err != nil {
+		fmt.Fprintf(w, `[]`)
+		return
+	}
+
+	fmt.Fprintf(w, "%v", string(ret))
+}
+
 func ping(w http.ResponseWriter, r *http.Request) {
 
 	_, ok := checkAuth(w, r)
@@ -194,7 +229,7 @@ func get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "%s\n", bot.Entity.(*Bot).JSON(bot))
+	fmt.Fprintf(w, "%s", bot.Entity.(*Bot).JSON(bot))
 }
 
 func getBot(user *User) *Control {

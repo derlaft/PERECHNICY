@@ -5,7 +5,9 @@ import (
 	"../req"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"../../block"
+	"../../entity"
 )
 
 var (
@@ -23,6 +25,8 @@ var (
 	Forms  map[Formid]Form = make(map[Formid]Form)
 
 	Server *req.Server
+
+	ImageTable map[byte]*Image
 )
 
 const (
@@ -44,6 +48,7 @@ type sketch struct {
 type Form interface {
 	Draw()
 	KeyDown(Key)
+	Setup()
 	Start()
 	Stop()
 }
@@ -61,21 +66,9 @@ func Sz(a int) int {
 }
 
 func Start() {
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "Please specify prog file\n")
-		return
-	}
-
-	Prog = os.Args[1]
-
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		return
-	}
-	os.Chdir(dir)
 
 	GrocessingStart(sketch{})
+
 }
 
 func ConfigFile() string {
@@ -94,6 +87,18 @@ func (s sketch) Setup() {
 	font, err := CreateFont("pixel.ttf", Sz(1)/2)
 	if err != nil {
 		panic(err)
+	}
+
+	ImageTable = make(map[byte]*Image)
+	for id := range block.Blocks {
+		AddTile(id)
+	}
+	for _, id := range entity.Entities {
+		AddTile(id)
+	}
+
+	for _, v := range Forms {
+		v.Setup()
 	}
 
 	SetFont(font)
@@ -126,4 +131,13 @@ func DrawTable(table [][]string, colw int) {
 	}
 
 	PopMatrix()
+}
+
+func AddTile(id byte) {
+	file := fmt.Sprintf("./tile/%v.png", id)
+	img, err := LoadImage(file)
+	if err != nil {
+		panic(err)
+	}
+	ImageTable[id] = img
 }

@@ -1,8 +1,6 @@
 package gameform
 
 import (
-	"../../block"
-	"../../entity"
 	"../../entity/entities"
 	. "../grocessing"
 	. "../ui"
@@ -16,10 +14,9 @@ type GameForm struct {
 }
 
 var (
-	imageTable map[byte]*Image
-	state      *entities.JSONOutput
-	lock       sync.Mutex
-	stahp      chan bool
+	state *entities.JSONOutput
+	lock  sync.Mutex
+	stahp chan bool
 
 	connectStatus string
 )
@@ -34,6 +31,9 @@ func init() {
 	Forms[GAME_SCREEN] = GameForm{}
 }
 
+func (g GameForm) Setup() {
+}
+
 func (g GameForm) KeyDown(a Key) {
 	switch a {
 	case KEY_RETURN:
@@ -45,16 +45,6 @@ func (g GameForm) KeyDown(a Key) {
 }
 
 func (g GameForm) Start() {
-	if imageTable == nil {
-		imageTable = make(map[byte]*Image)
-		for id := range block.Blocks {
-			addTile(id)
-		}
-		for _, id := range entity.Entities {
-			addTile(id)
-		}
-
-	}
 
 	state = &entities.JSONOutput{}
 	stahp = make(chan bool, 1)
@@ -143,19 +133,10 @@ func drawMap(x, y int) {
 	PopMatrix()
 }
 
-func addTile(id byte) {
-	file := fmt.Sprintf("./tile/%v.png", id)
-	img, err := LoadImage(file)
-	if err != nil {
-		panic(err)
-	}
-	imageTable[id] = img
-}
-
 func drawMapMain(id int) {
 	Rect(-1, -1, Sz(5)+1, Sz(5)+1)    //border
 	for i, v := range state.Map[id] { //tiles
-		imageTable[v].DrawRect(Sz(i%5), Sz(i/5), Sz(1), Sz(1))
+		ImageTable[v].DrawRect(Sz(i%5), Sz(i/5), Sz(1), Sz(1))
 	}
 	if state.Destroyed { //gameover sign
 		Fill(Dark)

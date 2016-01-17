@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 )
 
 type Server struct {
@@ -77,7 +78,11 @@ func (s *Server) Check() {
 }
 
 func (s *Server) request(method string, params url.Values) ([]byte, error) {
-	resp, err := http.PostForm(s.URL+method, params)
+	return requestUrl(s.URL+method, params)
+}
+
+func requestUrl(url string, params url.Values) ([]byte, error) {
+	resp, err := http.PostForm(url, params)
 	if err != nil {
 		return nil, err
 	}
@@ -150,6 +155,26 @@ func (s *Server) CheckLogin() (bool, error) {
 	}
 
 	return tr["Result"], err
+}
+
+func (s *Server) GetMap(x, y, w, h int) ([]int, error) {
+	body, err := s.request("map", url.Values{
+		"X": {strconv.Itoa(x)}, "Y": {strconv.Itoa(y)},
+		"W": {strconv.Itoa(w)}, "H": {strconv.Itoa(h)},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	mp := make([]int, 0, 0)
+	err = json.Unmarshal(body, &mp)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mp, nil
 }
 
 func (s *Server) GetData() (*entities.JSONOutput, error) {

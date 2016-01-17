@@ -185,16 +185,6 @@ func ScanInt(b *Bot, c *Control) {
 		b.Prog.State.Mem[cell] = c.Game.At(*pt)
 	}
 
-	// debug := ""
-	// for i := 0; i <= VIDEO_SIZE-1; i++ {
-	// 	for j := 0; j <= VIDEO_SIZE-1; j++ {
-	// 		cell := (j * VIDEO_SIZE) + i
-	// 		debug += fmt.Sprintf("%2d ", b.Prog.State.Mem[cell])
-	// 	}
-	// 	debug += "\n"
-	// }
-	// debug += "===="
-	// fmt.Println(debug)
 }
 
 func (b *Bot) OnColission(me, he *Control) {

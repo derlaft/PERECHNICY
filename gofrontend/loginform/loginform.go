@@ -38,6 +38,8 @@ func init() {
 type LoginForm struct {
 }
 
+func (f LoginForm) Setup() {
+}
 func (f LoginForm) Start() {
 	connectStatus = PRESS_ENTER
 }
