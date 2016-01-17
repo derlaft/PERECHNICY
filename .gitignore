@@ -24,3 +24,7 @@ _testmain.go
 *.prof
 
 .exvim.PERECHNICY
+.exvim.GOFRONTEND
+GOFRONTEND.exvim
+PERECHNICY.exvim
+

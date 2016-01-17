@@ -18,21 +18,18 @@ import (
 )
 
 var (
-	game   *Game
-	ctl    EntityControl
-	Progs  ProgDB
-	Tokens TokenDB
+	game *Game
+	DB   *database
 )
 
 const (
 	TOKEN_SIZE = 20
 )
 
-type Bots map[User]*Control
-type ProgDB map[User]*mio.Prog
-type TokenDB map[User]string
-
-type DB map[User]DBEntry
+type database struct {
+	DB map[User]*DBEntry
+	sync.RWMutex
+}
 
 type DBEntry struct {
 	Bot   *Control
@@ -41,18 +38,21 @@ type DBEntry struct {
 	sync.RWMutex
 }
 
-type EntityControl struct {
-	bots Bots
-	sync.RWMutex
-}
-
 type User struct {
 	Name string
 }
 
+func newDatabase() *database {
+	r := database{}
+
+	r.DB = make(map[User]*DBEntry)
+
+	return &r
+}
+
 func Serve(addr string) {
-	Progs = make(ProgDB)
-	Tokens = make(TokenDB)
+
+	DB = newDatabase()
 
 	gameInit()
 	httpInit(addr)
@@ -70,7 +70,6 @@ func gameInit() {
 	mrand.Seed(time.Now().UnixNano())
 
 	game = NewGame(NewMap(1), block.EventHandler{})
-	ctl = EntityControl{bots: make(Bots)}
 
 	game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
 	go gameLoop()
@@ -106,7 +105,7 @@ func checkAuth(w http.ResponseWriter, r *http.Request) (*User, bool) {
 	user, token := r.FormValue("User"), r.FormValue("Token")
 	userobj := User{Name: user}
 
-	if user == "" || Tokens[userobj] != token {
+	if user == "" || DB.DB[userobj].Token != token {
 		fmt.Fprintf(w, `{"Result": false, "Reason": "Bad auth"}`)
 		return nil, false
 	}
@@ -118,12 +117,14 @@ func register(w http.ResponseWriter, r *http.Request) {
 	user := User{Name: r.FormValue("User")}
 	fmt.Println("COCO", user.Name+"\n\n\n")
 
-	_, registered := Tokens[user]
+	_, registered := DB.DB[user]
 	if !registered {
 		newtoken, err := randToken()
 		if err == nil {
 			fmt.Fprintf(w, `{"Result": true, "Token": "%v"}`, newtoken)
-			Tokens[user] = newtoken
+			DB.Lock()
+			DB.DB[user] = &DBEntry{Token: newtoken}
+			DB.Unlock()
 			return
 		}
 		//failed to generate token
@@ -141,8 +142,9 @@ func start(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if already started
-	bot, exists := ctl.get(*user)
-	if exists && !bot.Destroyed {
+	entry, exists := DB.DB[*user]
+	bot := entry.Bot
+	if exists && bot != nil && !bot.Destroyed {
 		// setting result to true as we can still continue
 		fmt.Fprintf(w, `{"Result": true, "Reason": "Already exists"}`)
 		return
@@ -153,9 +155,9 @@ func start(w http.ResponseWriter, r *http.Request) {
 
 	// start
 	bot = getBot(user)
-	ctl.Lock()
-	ctl.bots[*user] = bot
-	ctl.Unlock()
+	entry.Lock()
+	entry.Bot = bot
+	entry.Unlock()
 
 	fmt.Fprintf(w, `{"Result": true}`)
 }
@@ -171,21 +173,15 @@ func ping(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"Result": true}`)
 }
 
-func (c *EntityControl) get(u User) (*Control, bool) {
-	ctl.RLock()
-	bot, exists := ctl.bots[u]
-	ctl.RUnlock()
-	return bot, exists
-}
-
 func get(w http.ResponseWriter, r *http.Request) {
 	user, ok := checkAuth(w, r)
 	if !ok {
 		return
 	}
 
-	bot, exists := ctl.get(*user)
-	if bot == nil || !exists {
+	entry, exists := DB.DB[*user]
+	bot := entry.Bot
+	if !exists || bot == nil || bot == nil {
 		fmt.Fprintf(w, `{"Result": false, "Reason": "NOT FOUND"}`)
 		return
 	}
@@ -194,8 +190,11 @@ func get(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBot(user *User) *Control {
-	prog, found := Progs[*user]
-	if !found {
+	entry, found := DB.DB[*user]
+	entry.RLock()
+	prog := entry.Prog
+	entry.RUnlock()
+	if !found || prog == nil {
 		panic("Prog not found")
 	}
 	fmt.Fprintf(os.Stderr, "Spawned bot for %v\n", user.Name)
@@ -208,7 +207,12 @@ func getBot(user *User) *Control {
 
 func (u *User) addProg(p string) error {
 	prog, err := mio.ProgFromString(p)
-	Progs[*u] = prog
+	entry := DB.DB[*u]
+	entry.Lock()
+	entry.Prog = prog
+	entry.Unlock()
+
+	fmt.Println("COCO", DB.DB[*u].Prog)
 	return err
 }
 
