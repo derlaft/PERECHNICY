@@ -1,10 +1,13 @@
 package main
 
 import (
+	_ "./explorer/"
 	_ "./gameform/"
 	_ "./loginform/"
+	_ "./mainmenu/"
 	"./ui"
 	"fmt"
+	flag "github.com/ogier/pflag"
 	"os"
 	"path/filepath"
 )
@@ -17,12 +20,24 @@ func main() {
 	}
 	os.Chdir(dir)
 
-	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "Please specify prog file\n")
+	prog := flag.String("prog", "", "Prog to launch")
+	chunked := flag.String("chunked", "", "Chunk to edit")
+	view := flag.Bool("explorer", false, "View map mode")
+
+	flag.Parse()
+
+	if *prog == "" && *chunked == "" && !*view {
+		fmt.Fprintf(os.Stderr, "WAT DO YOU WANT\n")
 		return
 	}
 
-	ui.Prog = os.Args[1]
-	ui.Screen(ui.LOGIN_SCREEN)
+	if *prog != "" {
+		ui.Prog = *prog
+		ui.Screen(ui.MAINMENU_SCREEN)
+	} else if *chunked != "" {
+		//@TODO
+	} else if *view {
+		ui.Screen(ui.EXPLORER_SCREEN)
+	}
 	ui.Start()
 }

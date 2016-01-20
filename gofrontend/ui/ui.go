@@ -33,6 +33,12 @@ const (
 	LOGIN_SCREEN = Formid(iota)
 	GAME_SCREEN
 	HIGHSCORES_SCREEN
+	EXPLORER_SCREEN
+	MAINMENU_SCREEN
+	EXIT
+
+	DIM_X = 25
+	DIM_Y = 9
 )
 
 const (
@@ -56,6 +62,10 @@ type Form interface {
 type Formid uint
 
 func Screen(new Formid) {
+	if new == EXIT {
+		os.Exit(0)
+	}
+
 	Forms[screen].Stop()
 	screen = new
 	Forms[new].Start()
@@ -76,11 +86,14 @@ func ConfigFile() string {
 }
 
 func (s sketch) KeyPressed() {
+	if KeyCode == KEY_ESC {
+		Screen(MAINMENU_SCREEN)
+	}
 	Forms[screen].KeyDown(KeyCode)
 }
 
 func (s sketch) Setup() {
-	scale = 48
+	scale = 32
 	Size(Sz(25), Sz(9))
 	TextAlign(ALIGN_CENTER)
 

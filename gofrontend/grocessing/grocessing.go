@@ -40,6 +40,7 @@ const (
 	KEY_LEFT   = Key(sdl.K_LEFT)
 	KEY_RIGHT  = Key(sdl.K_RIGHT)
 	KEY_RETURN = Key(sdl.K_RETURN)
+	KEY_ESC    = Key(sdl.K_ESCAPE)
 
 	ALIGN_CENTER = iota
 	ALIGN_LEFT
@@ -159,6 +160,10 @@ func Hc(h int32) Color {
 		uint8((h >> 0) & 0xFF),
 		0,
 	}
+}
+
+func Title(title string) {
+	window.SetTitle(title)
 }
 
 func NoFill() {
