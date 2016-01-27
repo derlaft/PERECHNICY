@@ -1,7 +1,8 @@
 package blocks
 
 const (
-	TILE_WALL = 9
+	TILE_WALL     = 9
+	TILE_MUSHROOM = 103
 )
 
 type Wall struct {

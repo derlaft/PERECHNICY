@@ -41,6 +41,7 @@ const (
 	KEY_RIGHT  = Key(sdl.K_RIGHT)
 	KEY_RETURN = Key(sdl.K_RETURN)
 	KEY_ESC    = Key(sdl.K_ESCAPE)
+	KEY_SPACE  = Key(sdl.K_SPACE)
 
 	ALIGN_CENTER = iota
 	ALIGN_LEFT

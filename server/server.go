@@ -11,7 +11,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	mrand "math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -70,11 +69,9 @@ func httpInit(addr string) {
 }
 
 func gameInit() {
-	mrand.Seed(time.Now().UnixNano())
+	game = NewGame(NewMap(100500, int(time.Now().Unix())), block.EventHandler{})
 
-	game = NewGame(NewMap(1), block.EventHandler{})
-
-	game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
+	//game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
 	go gameLoop()
 
 	NewEntity(game, Point{2, 2}, &Bear{})
@@ -92,7 +89,7 @@ func gameLoop() {
 			diff += time.Now().UnixNano()
 			ticks += 1
 			if diff >= 1000 {
-				fmt.Printf("%v\r", ticks)
+				//fmt.Printf("%v\r", ticks)
 				ticks = 0
 				diff = 0
 			}

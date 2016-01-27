@@ -27,6 +27,8 @@ var (
 	Server *req.Server
 
 	ImageTable map[byte]*Image
+
+	Blocks []byte
 )
 
 const (
@@ -35,6 +37,7 @@ const (
 	HIGHSCORES_SCREEN
 	EXPLORER_SCREEN
 	MAINMENU_SCREEN
+	EDITOR_SCREEN
 	EXIT
 
 	DIM_X = 25
@@ -93,7 +96,7 @@ func (s sketch) KeyPressed() {
 }
 
 func (s sketch) Setup() {
-	scale = 32
+	scale = 48
 	Size(Sz(25), Sz(9))
 	TextAlign(ALIGN_CENTER)
 
@@ -103,10 +106,22 @@ func (s sketch) Setup() {
 	}
 
 	ImageTable = make(map[byte]*Image)
+
+	Blocks = make([]byte, 0, 0)
+
+	// block
 	for id := range block.Blocks {
 		AddTile(id)
+		Blocks = append(Blocks, id)
 	}
+
+	// entity
 	for _, id := range entity.Entities {
+		AddTile(id)
+	}
+
+	// local stuff
+	for _, id := range []byte{255} {
 		AddTile(id)
 	}
 

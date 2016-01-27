@@ -6,6 +6,7 @@ import (
 
 const (
 	TILE_GROUND = 0
+	TILE_BONES  = 107
 )
 
 type Ground struct {

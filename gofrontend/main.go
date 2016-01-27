@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "./editor/"
 	_ "./explorer/"
 	_ "./gameform/"
 	_ "./loginform/"
@@ -21,7 +22,7 @@ func main() {
 	os.Chdir(dir)
 
 	prog := flag.String("prog", "", "Prog to launch")
-	chunked := flag.String("chunked", "", "Chunk to edit")
+	chunked := flag.String("edit", "", "Chunk to edit")
 	view := flag.Bool("explorer", false, "View map mode")
 
 	flag.Parse()
@@ -35,7 +36,7 @@ func main() {
 		ui.Prog = *prog
 		ui.Screen(ui.MAINMENU_SCREEN)
 	} else if *chunked != "" {
-		//@TODO
+		ui.Screen(ui.EDITOR_SCREEN)
 	} else if *view {
 		ui.Screen(ui.EXPLORER_SCREEN)
 	}

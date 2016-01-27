@@ -8,9 +8,13 @@ import (
 
 var (
 	Blocks = map[byte]Block{
-		TILE_GROUND: Ground{},
-		TILE_VODKA:  Vodka{},
-		TILE_WALL:   Wall{},
+		TILE_GROUND:   Ground{},
+		TILE_WALL:     Wall{},
+		TILE_BONES:    Ground{},
+		TILE_MUSHROOM: Wall{},
+		1:             Wall{},
+		byte(99):      DummyEntity{},
+		byte(98):      DummyEntity{},
 	}
 )
 
