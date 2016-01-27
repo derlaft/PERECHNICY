@@ -29,6 +29,7 @@ func init() {
 	Server, err = req.Load(SERVER_URL, ConfigFile())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading config file (%v)\n", err)
+		Server = req.NewServer(SERVER_URL, "", "")
 	}
 	nick = []rune(Server.User)
 
