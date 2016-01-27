@@ -75,6 +75,10 @@ func (s *Server) Check() {
 		s.Token = ""
 	}
 
+	if len(s.User) != 8 {
+		s.User = "________"
+	}
+
 }
 
 func (s *Server) request(method string, params url.Values) ([]byte, error) {

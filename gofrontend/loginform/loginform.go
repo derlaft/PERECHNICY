@@ -31,6 +31,12 @@ func init() {
 		fmt.Fprintf(os.Stderr, "Error loading config file (%v)\n", err)
 		Server = req.NewServer(SERVER_URL, "", "")
 	}
+
+	//@TODO: clean solution
+	if len(Server.User) != 8 {
+		Server.User = "________"
+	}
+
 	nick = []rune(Server.User)
 
 	Forms[LOGIN_SCREEN] = LoginForm{}
