@@ -37,6 +37,8 @@ var (
 	cx     = 0
 	cy     = 0
 	cursor = 0
+
+	Brushes []int
 )
 
 type editorForm struct {
@@ -63,12 +65,7 @@ func (e editorForm) KeyDown(key Key) {
 	case KEY_SPACE:
 		fallthrough
 	case KEY_RETURN:
-		tile, zero := Blocks[cursor]
-		if zero {
-			Map[cy*CZ+cx] = -1
-		} else {
-			Map[cy*CZ+cx] = tile
-		}
+		Map[cy*CZ+cx] = Brushes[cursor]
 	}
 
 	cx = (CZ + cx) % CZ
@@ -124,7 +121,11 @@ func drawPanel(x, y int) {
 }
 
 func (e editorForm) Setup() {
-
+	Brushes = make([]int, 0, 0)
+	for _, v := range Blocks {
+		Brushes = append(Brushes, int(v))
+	}
+	Brushes = append(Brushes, -1)
 }
 
 func (e editorForm) Start() {
