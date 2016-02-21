@@ -42,7 +42,7 @@ func (e *editorForm) KeyDown(key Key) {
 	case KEY_SPACE:
 		fallthrough
 	case KEY_RETURN:
-		e.Map[cy*CZ+cx] = Brushes[cursor]
+		e.Map[e.cy*CZ+e.cx] = Brushes[e.cursor]
 	}
 
 	e.cx = (CZ + e.cx) % CZ
@@ -71,7 +71,7 @@ func (e *editorForm) drawMap(x, y int) {
 		if v > 0 && in {
 			img.DrawRect(Sz(x), Sz(y), Sz(1), Sz(1))
 		}
-		if x == cx && y == cy {
+		if x == e.cx && y == e.cy {
 			ImageTable[255].DrawRect(Sz(x), Sz(y), Sz(1), Sz(1))
 		}
 	}

@@ -16,56 +16,51 @@ const (
 	SCALE   = 1
 )
 
-var (
-	Map    []int = nil
-	cx           = 0
-	cy           = 0
-	server *request.Server
+type explorerForm struct {
+	Map    []int
+	cx, cy int
 	lock   sync.Mutex
 	stahp  chan bool
-)
-
-type explorerForm struct {
 }
 
 func init() {
-	Forms[EXPLORER_SCREEN] = explorerForm{}
-	server = request.NewServer(SERVER_URL, "", "")
+	Forms[EXPLORER_SCREEN] = &explorerForm{}
+	Server = request.NewServer(SERVER_URL, "", "")
 }
 
-func update() {
-	lock.Lock()
-	defer lock.Unlock()
-	mp, err := server.GetMap(cx, cy, DIM_X, DIM_Y)
+func (e *explorerForm) update() {
+	e.lock.Lock()
+	defer e.lock.Unlock()
+	mp, err := Server.GetMap(e.cx, e.cy, DIM_X, DIM_Y)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 	}
-	Map = mp
+	e.Map = mp
 }
 
-func (e explorerForm) KeyDown(key Key) {
+func (e *explorerForm) KeyDown(key Key) {
 	switch key {
 	case KEY_UP:
-		cy -= 1
-		update()
+		e.cy -= 1
+		e.update()
 	case KEY_DOWN:
-		cy += 1
-		update()
+		e.cy += 1
+		e.update()
 	case KEY_LEFT:
-		cx -= 1
-		update()
+		e.cx -= 1
+		e.update()
 	case KEY_RIGHT:
-		cx += 1
-		update()
+		e.cx += 1
+		e.update()
 	}
 
 }
 
-func (e explorerForm) Draw() {
-	if Map != nil {
-		lock.Lock()
-		defer lock.Unlock()
-		for i, v := range Map { //tiles
+func (e *explorerForm) Draw() {
+	if e.Map != nil {
+		e.lock.Lock()
+		defer e.lock.Unlock()
+		for i, v := range e.Map { //tiles
 			ImageTable[byte(v)].DrawRect(sz(i%DIM_X), sz(i/DIM_X), sz(1), sz(1))
 		}
 	} else {
@@ -78,25 +73,25 @@ func sz(a int) int {
 	return Sz(a) / SCALE
 }
 
-func (e explorerForm) Setup() {
+func (e *explorerForm) Setup() {
 
 }
-func (e explorerForm) Start() {
+func (e *explorerForm) Start() {
 	Title("EXPLORER.EXE")
 
-	stahp = make(chan bool)
+	e.stahp = make(chan bool)
 
 	go func() {
 		for {
 			select {
 			case <-time.After(time.Second / 10):
-				go update()
-			case <-stahp:
+				go e.update()
+			case <-e.stahp:
 				return
 			}
 		}
 	}()
 }
-func (e explorerForm) Stop() {
-	stahp <- true
+func (e *explorerForm) Stop() {
+	e.stahp <- true
 }

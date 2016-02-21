@@ -67,7 +67,7 @@ func (g *GameForm) Start() {
 }
 
 func (g *GameForm) Stop() {
-	stahp <- true
+	g.stahp <- true
 }
 
 func (g *GameForm) Draw() {
