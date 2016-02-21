@@ -31,3 +31,4 @@ main
 do
 
 vendor/src/
+vendor/pkg/
