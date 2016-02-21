@@ -1,0 +1,32 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/ogier/pflag",
+			"repository": "https://github.com/ogier/pflag",
+			"revision": "45c278ab3607870051a2ea9040bb85fcb8557481",
+			"branch": "master"
+		},
+		{
+			"importpath": "github.com/veandco/go-sdl2/sdl",
+			"repository": "https://github.com/veandco/go-sdl2",
+			"revision": "2a60e820199f7fa40b20b7547e918650367ea657",
+			"branch": "master",
+			"path": "/sdl"
+		},
+		{
+			"importpath": "github.com/veandco/go-sdl2/sdl_image",
+			"repository": "https://github.com/veandco/go-sdl2",
+			"revision": "2a60e820199f7fa40b20b7547e918650367ea657",
+			"branch": "master",
+			"path": "/sdl_image"
+		},
+		{
+			"importpath": "github.com/veandco/go-sdl2/sdl_ttf",
+			"repository": "https://github.com/veandco/go-sdl2",
+			"revision": "2a60e820199f7fa40b20b7547e918650367ea657",
+			"branch": "master",
+			"path": "/sdl_ttf"
+		}
+	]
+}

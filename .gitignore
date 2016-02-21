@@ -27,4 +27,7 @@ _testmain.go
 .exvim.GOFRONTEND
 GOFRONTEND.exvim
 PERECHNICY.exvim
+main
+do
 
+vendor/src/
