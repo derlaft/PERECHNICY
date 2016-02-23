@@ -118,8 +118,8 @@ func (s sketch) Setup() {
 		Blocks = append(Blocks, id)
 	}
 
-	// entity; it's a slice
-	for _, id := range game.Entities {
+	// entity; it's a map too
+	for id := range game.Entities {
 		AddTile(id)
 	}
 

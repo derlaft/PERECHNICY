@@ -5,13 +5,13 @@ import (
 	. "client/ui"
 	"fmt"
 	"os"
-	"server/game/entity"
+	"server/game"
 	"sync"
 	"time"
 )
 
 type GameForm struct {
-	state         *entity.JSONOutput
+	state         *game.JSONOutput
 	lock          sync.Mutex
 	stahp         chan bool
 	connectStatus string
@@ -46,7 +46,7 @@ func (g *GameForm) KeyDown(a Key) bool {
 
 func (g *GameForm) Start() {
 
-	g.state = &entity.JSONOutput{}
+	g.state = &game.JSONOutput{}
 	g.stahp = make(chan bool, 1)
 
 	for {

@@ -160,14 +160,8 @@ func (g *Game) Dump(from, to Point) (out string) {
 
 			pt := Point{j, i}
 
-			entity := g.EntityAt(pt)
-			tile := g.World.At(pt)
-
-			if entity != nil {
-				out += " " + string(entity.Byte())
-			} else {
-				out += fmt.Sprintf(" %d", tile)
-			}
+			bt := g.At(pt)
+			out += fmt.Sprintf(" %d", bt)
 		}
 		out += "\n"
 	}

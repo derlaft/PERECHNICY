@@ -1,10 +1,9 @@
-package entity
+package game
 
 import (
 	"encoding/json"
 	"figex/mio"
 	"fmt"
-	. "server/game"
 	. "util"
 )
 
@@ -49,13 +48,17 @@ type JSONOutput struct {
 	Map       [3][VIDEO_SIZE * VIDEO_SIZE]byte
 }
 
-func NewBot(prog *mio.Prog) *Bot {
-	bot := Bot{
-		Prog:   prog,
+func NewBot() Entity {
+	// bot can not be created this way
+	return nil
+}
+
+func NewProgBot(prog *mio.Prog) *Bot {
+	return &Bot{
 		Energy: ENERGY_START,
 		HP:     HP_START,
+		Prog:   prog,
 	}
-	return &bot
 }
 
 func (b *Bot) Health() uint {

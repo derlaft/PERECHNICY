@@ -107,7 +107,7 @@ func (e *editorForm) Setup() {
 		Brushes = append(Brushes, int(v))
 	}
 
-	for _, v := range game.Entities {
+	for v := range game.Entities {
 		Brushes = append(Brushes, int(v))
 	}
 

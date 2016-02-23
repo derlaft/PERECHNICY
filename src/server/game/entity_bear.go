@@ -1,8 +1,7 @@
-package entity
+package game
 
 import (
 	"math/rand"
-	. "server/game"
 	. "util"
 )
 
@@ -11,8 +10,10 @@ type Bear struct {
 	tick uint
 }
 
-func (b *Bear) Init(c *Control) {
-	b.hp = 1
+func NewBear() Entity {
+	return &Bear{
+		hp: 42,
+	}
 }
 
 func (b *Bear) Health() uint {
@@ -39,5 +40,5 @@ func (b *Bear) Byte(c *Control) byte {
 }
 
 func (b *Bear) OnColission(c1 *Control, c2 *Control) {
-
+	// bear is afraid to do anything
 }

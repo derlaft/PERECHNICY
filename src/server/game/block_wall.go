@@ -1,4 +1,4 @@
-package block
+package game
 
 type Wall struct {
 }

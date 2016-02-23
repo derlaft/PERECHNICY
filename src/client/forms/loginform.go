@@ -31,6 +31,9 @@ type LoginForm struct {
 }
 
 func (e *LoginForm) Setup() {
+}
+
+func (e *LoginForm) Start() {
 	var err error
 
 	Server, err = request.Load(SERVER_URL, ConfigFile())
@@ -45,9 +48,6 @@ func (e *LoginForm) Setup() {
 	}
 
 	e.nick = []rune(Server.User)
-}
-
-func (e *LoginForm) Start() {
 	e.connectStatus = PRESS_ENTER
 }
 
@@ -150,7 +150,6 @@ func (e *LoginForm) doRegister() {
 	err := Server.Register()
 	if err != nil {
 		e.connectStatus = err.Error()
-		return
 	}
 
 	e.doStart()

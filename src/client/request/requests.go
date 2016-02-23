@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"server/game/entity"
+	"server/game"
 	"strconv"
 )
 
@@ -181,14 +181,14 @@ func (s *Server) GetMap(x, y, w, h int) ([]int, error) {
 	return mp, nil
 }
 
-func (s *Server) GetData() (*entity.JSONOutput, error) {
+func (s *Server) GetData() (*game.JSONOutput, error) {
 	body, err := s.request("get", s.values(nil))
 
 	if err != nil {
 		return nil, err
 	}
 
-	newState := entity.JSONOutput{}
+	newState := game.JSONOutput{}
 	err = json.Unmarshal(body, &newState)
 
 	if err != nil {

@@ -1,10 +1,5 @@
 package game
 
-import (
-	//	. "util"
-	. "server/game/block"
-)
-
 var (
 	Blocks = BlocksMap{
 		TILE_GROUND:   Ground{},
@@ -13,13 +8,14 @@ var (
 		TILE_MUSHROOM: Wall{},
 	}
 
-	Entities = []byte{
-		ENTITY_BEAR,
-		ENTITY_BOT,
+	Entities = EntityMap{
+		ENTITY_BEAR: NewBear,
+		ENTITY_BOT:  NewBot,
 	}
 )
 
 type BlocksMap map[byte]Block
+type EntityMap map[byte]func() Entity
 
 const (
 	TILE_GROUND   = byte(0x0)

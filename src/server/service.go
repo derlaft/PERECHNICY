@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	. "server/game"
-	. "server/game/entity"
 	"strconv"
 	"sync"
 	"time"
@@ -238,7 +237,7 @@ func getBot(user *User) *Control {
 	fmt.Fprintf(os.Stderr, "Spawned bot for %v\n", user.Name)
 
 	//TODO: find safe spawn location and use it
-	control, _ := NewEntity(game, Point{1, 1}, NewBot(prog))
+	control, _ := NewEntity(game, Point{1, 1}, NewProgBot(prog))
 	return control
 
 }
