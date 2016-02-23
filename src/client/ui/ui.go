@@ -58,7 +58,7 @@ type sketch struct {
 
 type Form interface {
 	Draw()
-	KeyDown(Key)
+	KeyDown(Key) bool
 	Setup()
 	Start()
 	Stop()
@@ -91,10 +91,11 @@ func ConfigFile() string {
 }
 
 func (s sketch) KeyPressed() {
-	if KeyCode == KEY_ESC {
-		Screen(MAINMENU_SCREEN)
+	if !Forms[screen].KeyDown(KeyCode) {
+		if KeyCode == KEY_ESC {
+			Screen(MAINMENU_SCREEN)
+		}
 	}
-	Forms[screen].KeyDown(KeyCode)
 }
 
 func (s sketch) Setup() {

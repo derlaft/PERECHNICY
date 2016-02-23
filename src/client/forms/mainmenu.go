@@ -36,7 +36,7 @@ func init() {
 	Forms[MAINMENU_SCREEN] = &mainmenuForm{}
 }
 
-func (e *mainmenuForm) KeyDown(key Key) {
+func (e *mainmenuForm) KeyDown(key Key) bool {
 	switch key {
 	case KEY_DOWN:
 		e.cursor = (e.cursor + 1) % len(MENU_ENTRIES)
@@ -44,7 +44,10 @@ func (e *mainmenuForm) KeyDown(key Key) {
 		e.cursor = (len(MENU_ENTRIES) + e.cursor - 1) % len(MENU_ENTRIES)
 	case KEY_RETURN:
 		Screen(MENU_ENTRIES[e.cursor].id)
+	default:
+		return false
 	}
+	return true
 }
 
 func (e *mainmenuForm) Draw() {

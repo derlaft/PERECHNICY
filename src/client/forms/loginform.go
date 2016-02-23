@@ -54,7 +54,7 @@ func (e *LoginForm) Start() {
 func (e *LoginForm) Stop() {
 }
 
-func (e *LoginForm) KeyDown(key Key) {
+func (e *LoginForm) KeyDown(key Key) bool {
 	switch key {
 	case KEY_UP:
 		e.nick[e.cursor] = next(e.nick[e.cursor], -1)
@@ -78,8 +78,11 @@ func (e *LoginForm) KeyDown(key Key) {
 
 			e.nick[e.cursor] = unicode.ToUpper(rune(key))
 			e.cursor = (e.cursor + 1) % NICK_LEN
+		} else {
+			return false
 		}
 	}
+	return true
 }
 
 func (e *LoginForm) Draw() {

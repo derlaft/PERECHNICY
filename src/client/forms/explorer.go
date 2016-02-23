@@ -38,7 +38,7 @@ func (e *explorerForm) update() {
 	e.Map = mp
 }
 
-func (e *explorerForm) KeyDown(key Key) {
+func (e *explorerForm) KeyDown(key Key) bool {
 	switch key {
 	case KEY_UP:
 		e.cy -= 1
@@ -52,8 +52,10 @@ func (e *explorerForm) KeyDown(key Key) {
 	case KEY_RIGHT:
 		e.cx += 1
 		e.update()
+	default:
+		return false
 	}
-
+	return true
 }
 
 func (e *explorerForm) Draw() {

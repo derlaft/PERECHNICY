@@ -25,8 +25,10 @@ func init() {
 	Forms[EDITOR_SCREEN] = &editorForm{}
 }
 
-func (e *editorForm) KeyDown(key Key) {
+func (e *editorForm) KeyDown(key Key) bool {
 	switch key {
+	case KEY_ESC:
+		// do nothing
 	case KEY_UP:
 		e.cy -= 1
 	case KEY_DOWN:
@@ -43,12 +45,14 @@ func (e *editorForm) KeyDown(key Key) {
 		fallthrough
 	case KEY_RETURN:
 		e.Map[e.cy*CZ+e.cx] = Brushes[e.cursor]
+	default:
+		return false
 	}
 
 	e.cx = (CZ + e.cx) % CZ
 	e.cy = (CZ + e.cy) % CZ
 	e.cursor = (len(Brushes) + e.cursor) % (len(Brushes))
-
+	return true
 }
 
 func (e *editorForm) Draw() {
@@ -100,6 +104,10 @@ func (e *editorForm) drawPanel(x, y int) {
 func (e *editorForm) Setup() {
 	Brushes = make([]int, 0, 0)
 	for _, v := range Blocks {
+		Brushes = append(Brushes, int(v))
+	}
+
+	for _, v := range game.Entities {
 		Brushes = append(Brushes, int(v))
 	}
 

@@ -30,14 +30,18 @@ func (g *GameForm) Setup() {
 	g.stahp = make(chan bool, 1)
 }
 
-func (g *GameForm) KeyDown(a Key) {
+func (g *GameForm) KeyDown(a Key) bool {
 	switch a {
 	case KEY_RETURN:
 		if g.state.Destroyed {
 			fmt.Println("JUMPING")
 			Screen(LOGIN_SCREEN)
 		}
+	default:
+		return false
 	}
+
+	return true
 }
 
 func (g *GameForm) Start() {
