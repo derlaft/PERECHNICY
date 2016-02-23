@@ -47,7 +47,7 @@ func (e *editorForm) KeyDown(key Key) {
 
 	e.cx = (CZ + e.cx) % CZ
 	e.cy = (CZ + e.cy) % CZ
-	e.cursor = (len(Blocks) + 1 + e.cursor) % (len(Blocks) + 1)
+	e.cursor = (len(Brushes) + e.cursor) % (len(Brushes))
 
 }
 
@@ -68,7 +68,7 @@ func (e *editorForm) drawMap(x, y int) {
 		y := i / CZ
 
 		img, in := ImageTable[byte(v)]
-		if v > 0 && in {
+		if v >= 0 && in {
 			img.DrawRect(Sz(x), Sz(y), Sz(1), Sz(1))
 		}
 		if x == e.cx && y == e.cy {
@@ -87,9 +87,9 @@ func (e *editorForm) drawPanel(x, y int) {
 	Text("PLACE BY SPACE/ENTER", 0, 0, Sz(10), Sz(1))
 
 	Translate(Sz(1), Sz(2))
-	for i, v := range Blocks {
-		ImageTable[v].DrawRect(Sz(i%ROW), Sz(i/ROW), Sz(1), Sz(1))
-		if i == cursor {
+	for i, v := range Brushes {
+		ImageTable[byte(v)].DrawRect(Sz(i%ROW), Sz(i/ROW), Sz(1), Sz(1))
+		if i == e.cursor {
 			ImageTable[255].DrawRect(Sz(i%ROW), Sz(i/ROW), Sz(1), Sz(1))
 		}
 	}
@@ -102,7 +102,11 @@ func (e *editorForm) Setup() {
 	for _, v := range Blocks {
 		Brushes = append(Brushes, int(v))
 	}
-	Brushes = append(Brushes, -1)
+
+	e.Map = make([]int, CZ*CZ, CZ*CZ)
+	for i := range e.Map {
+		e.Map[i] = -1
+	}
 }
 
 func (e *editorForm) Start() {

@@ -25,43 +25,41 @@ var (
 		"The great and powerful!",
 		"2.0.1-git",
 	}
-
-	slogan string
-
-	cursor int = 0
 )
 
 type mainmenuForm struct {
+	slogan string
+	cursor int
 }
 
 func init() {
-	Forms[MAINMENU_SCREEN] = mainmenuForm{}
+	Forms[MAINMENU_SCREEN] = &mainmenuForm{}
 }
 
-func (e mainmenuForm) KeyDown(key Key) {
+func (e *mainmenuForm) KeyDown(key Key) {
 	switch key {
 	case KEY_DOWN:
-		cursor = (cursor + 1) % len(MENU_ENTRIES)
+		e.cursor = (e.cursor + 1) % len(MENU_ENTRIES)
 	case KEY_UP:
-		cursor = (len(MENU_ENTRIES) + cursor - 1) % len(MENU_ENTRIES)
+		e.cursor = (len(MENU_ENTRIES) + e.cursor - 1) % len(MENU_ENTRIES)
 	case KEY_RETURN:
-		Screen(MENU_ENTRIES[cursor].id)
+		Screen(MENU_ENTRIES[e.cursor].id)
 	}
 }
 
-func (e mainmenuForm) Draw() {
+func (e *mainmenuForm) Draw() {
 	PushMatrix()
 	Background(Dark)
 	Fill(Bright)
 	Translate(0, Sz(1))
 	Text("PERECHNICY", 0, 0, Sz(25), Sz(1))
 	Translate(0, Sz(1))
-	Text(slogan, 0, 0, Sz(25), Sz(1))
+	Text(e.slogan, 0, 0, Sz(25), Sz(1))
 	Translate(0, Sz(2))
 
 	for i, v := range MENU_ENTRIES {
 		var todraw string
-		if cursor == i {
+		if e.cursor == i {
 			todraw = fmt.Sprintf("> %v <", v.Title)
 		} else {
 			todraw = v.Title
@@ -79,7 +77,7 @@ func (e mainmenuForm) Setup() {
 }
 
 func (e mainmenuForm) Start() {
-	slogan = SLOGANS[rand.Intn(len(SLOGANS))]
+	e.slogan = SLOGANS[rand.Intn(len(SLOGANS))]
 }
 func (e mainmenuForm) Stop() {
 }

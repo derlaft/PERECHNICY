@@ -32,3 +32,6 @@ do
 
 vendor/src/
 vendor/pkg/
+
+.directory
+./bin/*
