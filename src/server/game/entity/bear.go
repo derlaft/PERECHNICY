@@ -6,10 +6,6 @@ import (
 	. "util"
 )
 
-const (
-	ENTITY_BEAR = byte('b')
-)
-
 type Bear struct {
 	hp   uint
 	tick uint

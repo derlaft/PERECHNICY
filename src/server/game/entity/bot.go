@@ -17,7 +17,6 @@ var (
 )
 
 const (
-	ENTITY_BOT      = byte('A')
 	DIRECTION_UP    = 0
 	DIRECTION_RIGHT = 1
 	DIRECTION_DOWN  = 2

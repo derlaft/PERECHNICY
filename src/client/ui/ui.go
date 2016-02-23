@@ -7,8 +7,7 @@ import (
 	"os"
 	"path"
 
-	"server/game/entity"
-	"server/world/block"
+	"server/game"
 )
 
 var (
@@ -112,18 +111,18 @@ func (s sketch) Setup() {
 
 	Blocks = make([]byte, 0, 0)
 
-	// block
-	for id := range block.Blocks {
+	// block; it's a map
+	for id := range game.Blocks {
 		AddTile(id)
 		Blocks = append(Blocks, id)
 	}
 
-	// entity
-	for _, id := range entity.Entities {
+	// entity; it's a slice
+	for _, id := range game.Entities {
 		AddTile(id)
 	}
 
-	// local stuff
+	// local stuff; 255 is our cursor
 	for _, id := range []byte{255} {
 		AddTile(id)
 	}

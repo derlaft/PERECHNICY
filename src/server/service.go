@@ -10,8 +10,6 @@ import (
 	"os"
 	. "server/game"
 	. "server/game/entity"
-	"server/world"
-	"server/world/block"
 	"strconv"
 	"sync"
 	"time"
@@ -69,7 +67,7 @@ func httpInit(addr string) {
 }
 
 func gameInit() {
-	game = NewGame(world.NewMap(100500, int(time.Now().Unix())), block.EventHandler{})
+	game = NewGame(NewMap(100500, int(time.Now().Unix())))
 
 	//game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
 	go gameLoop()

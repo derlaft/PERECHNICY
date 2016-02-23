@@ -3,11 +3,11 @@ package forms
 import (
 	. "client/grocessing"
 	. "client/ui"
-	"server/world"
+	"server/game"
 )
 
 const (
-	CZ  = world.CHUNK_SIZE
+	CZ  = game.CHUNK_SIZE
 	ROW = 8
 )
 

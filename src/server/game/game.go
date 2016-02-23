@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	. "server/world"
 	"sync"
 	. "util"
 )
@@ -28,12 +27,6 @@ type Game struct {
 	World    *Map
 	Entities entities
 	sync.RWMutex
-	EvHandler EventInterface
-}
-
-type EventInterface interface {
-	IsSolid(byte) bool
-	SendEvent(int, Point, *Control)
 }
 
 func NewEntity(game *Game, l Point, entity Entity) (*Control, bool) {
@@ -53,7 +46,7 @@ func NewEntity(game *Game, l Point, entity Entity) (*Control, bool) {
 }
 
 func (g *Game) IsBlockSolid(pt Point) bool {
-	return g.EvHandler.IsSolid(g.World.At(pt))
+	return Blocks.Is(g.World.At(pt), "Solid")
 }
 
 func (g *Game) EntityAt(pt Point) *Control {
@@ -121,9 +114,6 @@ func (c *Control) Move(next Point) bool {
 		c.Game.Lock()
 		c.Game.Unlock()
 		c.Location = next
-
-		c.Game.EvHandler.SendEvent(EVENT_ENTITY_ON, next, c)
-
 		return true
 	} else if entityAt != nil {
 		//collision
@@ -185,8 +175,8 @@ func (g *Game) Dump(from, to Point) (out string) {
 	return
 }
 
-func NewGame(w *Map, h EventInterface) *Game {
-	g := &Game{World: w, Entities: make(entities, 0), EvHandler: h}
+func NewGame(w *Map) *Game {
+	g := &Game{World: w, Entities: make(entities, 0)}
 	g.World.At(Point{0, 0})
 	return g
 }
