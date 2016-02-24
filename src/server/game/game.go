@@ -38,45 +38,70 @@ func (game *Game) NewEntity(l Point, entity Entity) (*Control, bool) {
 
 	game.Entities = append(game.Entities, ctl)
 
-	if !ctl.Move(l) {
-		return nil, false
+	queried := make(map[Point]bool)
+	toquery := make(map[Point]bool)
+
+	toquery[l] = true
+
+	for i := 0; i < 4; i++ {
+		next := make(map[Point]bool)
+
+		for ptx := range toquery {
+			if !queried[ptx] {
+				queried[ptx] = true
+				if ctl.Move(ptx) {
+					fmt.Println("SPAWN K")
+					return ctl, true
+				} else {
+					for _, ptn := range []Point{
+						ptx.Add(Point{+1, 0}),
+						ptx.Add(Point{-1, 0}),
+						ptx.Add(Point{0, +1}),
+						ptx.Add(Point{0, -1}),
+					} {
+						next[ptn] = true
+					}
+				}
+			}
+
+		}
+		fmt.Println("NEXTING")
+		toquery = next
+
 	}
 
-	return ctl, true
+	return nil, false
 }
 
 func (g *Game) IsBlock(quality string, pt Point) bool {
 	return Blocks.Is(g.World.At(pt), quality)
 }
 
-func (g *Game) at(queryEntities bool, pt Point) (*Control, byte) {
-	if queryEntities {
-		g.RLock()
-		for _, entity := range g.Entities {
-			if entity.Location == pt {
-				g.RUnlock()
-				return entity, entity.Byte()
-			}
+func (g *Game) at(pt Point) (*Control, byte) {
+	g.RLock()
+	for _, entity := range g.Entities {
+		if entity.Location == pt {
+			g.RUnlock()
+			return entity, entity.Byte()
 		}
-		g.RUnlock()
 	}
+	g.RUnlock()
 
 	block := g.World.At(pt)
 	if new_entity, exists := Entities[block]; exists {
-		g.NewEntity(pt, new_entity())
 		g.World.Set(pt, TILE_GROUND)
-
+		g.NewEntity(pt, new_entity())
 	}
 	return nil, g.World.At(pt)
 }
 
 func (g *Game) EntityAt(pt Point) *Control {
-	entity, _ := g.at(true, pt)
+	entity, _ := g.at(pt)
 	return entity
 }
 
 func (g *Game) ByteAt(pt Point) byte {
-	_, block := g.at(false, pt)
+	_, block := g.at(pt)
 	return block
 }
 
@@ -115,9 +140,7 @@ func (g *Game) deleteEntity(e *Control) {
 // Yes, the only supported movement type is teleporting, lol
 func (c *Control) Move(next Point) bool {
 
-	c.Game.RLock()
 	entityAt := c.Game.EntityAt(next)
-	c.Game.RUnlock()
 
 	if !c.Game.IsBlock(Solid, next) && entityAt == nil {
 		c.Game.Lock()

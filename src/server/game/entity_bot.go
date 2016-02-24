@@ -74,7 +74,7 @@ func (b *Bot) Tick(c *Control) {
 	inc, max := b.APParams(c)
 
 	b.AP = (b.AP + inc) % max
-	b.Energy -= 0
+	b.Energy -= 1
 
 	if b.Energy == 0 || b.HP == 0 {
 		//self-destruct

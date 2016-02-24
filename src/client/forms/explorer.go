@@ -25,15 +25,17 @@ type explorerForm struct {
 
 func init() {
 	Forms[EXPLORER_SCREEN] = &explorerForm{}
-	Server = request.NewServer(SERVER_URL, "", "")
 }
 
 func (e *explorerForm) update() {
 	e.lock.Lock()
 	defer e.lock.Unlock()
+	fmt.Println("updating")
 	mp, err := Server.GetMap(e.cx, e.cy, DIM_X, DIM_Y)
+	fmt.Println("updating", mp)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		return
 	}
 	e.Map = mp
 }
@@ -42,16 +44,16 @@ func (e *explorerForm) KeyDown(key Key) bool {
 	switch key {
 	case KEY_UP:
 		e.cy -= 1
-		e.update()
+		go e.update()
 	case KEY_DOWN:
 		e.cy += 1
-		e.update()
+		go e.update()
 	case KEY_LEFT:
 		e.cx -= 1
-		e.update()
+		go e.update()
 	case KEY_RIGHT:
 		e.cx += 1
-		e.update()
+		go e.update()
 	default:
 		return false
 	}
@@ -76,9 +78,10 @@ func sz(a int) int {
 }
 
 func (e *explorerForm) Setup() {
-
 }
+
 func (e *explorerForm) Start() {
+	Server = request.NewServer(SERVER_URL, "", "")
 	Title("EXPLORER.EXE")
 
 	e.stahp = make(chan bool)

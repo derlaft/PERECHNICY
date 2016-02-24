@@ -129,16 +129,22 @@ func doRoomChunk(m *Map, c *Chunk, pt Point) {
 
 	for i, row := range c.Data {
 		for j := range row {
-			b := n2d.GetByte(pt.X+int64(i), pt.Y+int64(j), 32)
+			b := n2d.GetByte(pt.X+int64(i), pt.Y+int64(j), 64)
 			r := byte(0)
 
-			switch b {
-			case 1, 2, 3, 4, 5, 6, 7, 8:
+			if b >= 30 && b <= 40 || b >= 50 && b <= 60 {
 				r = TILE_WALL
-			case 9:
+			}
+
+			switch b {
+			case 1, 3, 9, 10, 11:
 				r = TILE_BONES
-			case 12:
+			case 12, 15, 17, 19:
 				r = TILE_MUSHROOM
+			case 13:
+				r = ENTITY_BEAR
+			case 20:
+				r = ENTITY_KTULHU
 			}
 
 			c.Data[i][j] = r

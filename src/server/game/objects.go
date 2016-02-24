@@ -9,8 +9,9 @@ var (
 	}
 
 	Entities = EntityMap{
-		ENTITY_BEAR: NewBear,
-		ENTITY_BOT:  NewBot,
+		ENTITY_BEAR:   NewBear,
+		ENTITY_BOT:    NewBot,
+		ENTITY_KTULHU: NewKtulhu,
 	}
 )
 
