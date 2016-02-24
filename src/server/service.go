@@ -249,7 +249,6 @@ func (u *User) addProg(p string) error {
 	entry.Prog = prog
 	entry.Unlock()
 
-	fmt.Println("COCO", DB.DB[*u].Prog)
 	return err
 }
 

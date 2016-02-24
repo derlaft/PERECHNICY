@@ -25,6 +25,8 @@ const (
 	ENTITY_BEAR   = byte('b')
 	ENTITY_BOT    = byte('A')
 	ENTITY_KTULHU = byte('K')
+
+	Solid = "SOLID"
 )
 
 type Block interface {

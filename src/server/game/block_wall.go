@@ -5,7 +5,7 @@ type Wall struct {
 
 func (b Wall) Is() map[string]bool {
 	return map[string]bool{
-		"Solid": true,
+		Solid: true,
 	}
 }
 

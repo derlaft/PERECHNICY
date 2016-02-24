@@ -45,8 +45,8 @@ func (game *Game) NewEntity(l Point, entity Entity) (*Control, bool) {
 	return ctl, true
 }
 
-func (g *Game) IsBlockSolid(pt Point) bool {
-	return Blocks.Is(g.World.At(pt), "Solid")
+func (g *Game) IsBlock(quality string, pt Point) bool {
+	return Blocks.Is(g.World.At(pt), quality)
 }
 
 func (g *Game) at(queryEntities bool, pt Point) (*Control, byte) {
@@ -119,7 +119,7 @@ func (c *Control) Move(next Point) bool {
 	entityAt := c.Game.EntityAt(next)
 	c.Game.RUnlock()
 
-	if !c.Game.IsBlockSolid(next) && entityAt == nil {
+	if !c.Game.IsBlock(Solid, next) && entityAt == nil {
 		c.Game.Lock()
 		c.Game.Unlock()
 		c.Location = next
