@@ -71,7 +71,7 @@ func gameInit() {
 	//game.World.GetChunk(Point{0, 0}).Data[2][2] = 9
 	go gameLoop()
 
-	NewEntity(game, Point{2, 2}, &Bear{})
+	game.NewEntity(Point{2, 2}, &Bear{})
 }
 
 func gameLoop() {
@@ -186,7 +186,7 @@ func map_view(w http.ResponseWriter, r *http.Request) {
 	i := 0
 
 	for pt := range EachPoint(from, to) {
-		out[i] = int(game.At(*pt))
+		out[i] = int(game.ByteAt(*pt))
 		i += 1
 	}
 
@@ -237,7 +237,7 @@ func getBot(user *User) *Control {
 	fmt.Fprintf(os.Stderr, "Spawned bot for %v\n", user.Name)
 
 	//TODO: find safe spawn location and use it
-	control, _ := NewEntity(game, Point{1, 1}, NewProgBot(prog))
+	control, _ := game.NewEntity(Point{1, 1}, NewProgBot(prog))
 	return control
 
 }

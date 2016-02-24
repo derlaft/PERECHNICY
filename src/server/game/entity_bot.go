@@ -162,8 +162,7 @@ func AttackInt(b *Bot, c *Control) {
 		c.Location.Add(Point{-1, -1}),
 		c.Location.Add(Point{+1, +1}),
 	) {
-		e := c.Game.EntityAt(*pt)
-		if e != nil {
+		if e := c.Game.EntityAt(*pt); e != nil {
 			e.Entity.OnDamage(e, BOT_DAMAGE)
 		}
 	}
@@ -184,7 +183,7 @@ func ScanInt(b *Bot, c *Control) {
 	for pt := range EachPoint(from, to) {
 		cell := ((VIDEO_SIZE/2 + pt.X - c.Location.X) * VIDEO_SIZE) +
 			(VIDEO_SIZE/2 + pt.Y - c.Location.Y)
-		b.Prog.State.Mem[cell] = c.Game.At(*pt)
+		b.Prog.State.Mem[cell] = c.Game.ByteAt(*pt)
 	}
 
 }

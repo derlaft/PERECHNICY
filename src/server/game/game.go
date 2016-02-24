@@ -29,7 +29,7 @@ type Game struct {
 	sync.RWMutex
 }
 
-func NewEntity(game *Game, l Point, entity Entity) (*Control, bool) {
+func (game *Game) NewEntity(l Point, entity Entity) (*Control, bool) {
 	ctl := &Control{
 		Game:     game,
 		Location: Point{},
@@ -49,26 +49,35 @@ func (g *Game) IsBlockSolid(pt Point) bool {
 	return Blocks.Is(g.World.At(pt), "Solid")
 }
 
-func (g *Game) EntityAt(pt Point) *Control {
-	g.RLock()
-	defer g.RUnlock()
-	for _, e := range g.Entities {
-		if e.Location == pt {
-			return e
+func (g *Game) at(queryEntities bool, pt Point) (*Control, byte) {
+	if queryEntities {
+		g.RLock()
+		for _, entity := range g.Entities {
+			if entity.Location == pt {
+				g.RUnlock()
+				return entity, entity.Byte()
+			}
 		}
+		g.RUnlock()
 	}
 
-	return nil
+	block := g.World.At(pt)
+	if new_entity, exists := Entities[block]; exists {
+		g.NewEntity(pt, new_entity())
+		g.World.Set(pt, TILE_GROUND)
+
+	}
+	return nil, g.World.At(pt)
 }
 
-func (g *Game) At(pt Point) byte {
-	g.RLock()
-	entity := g.EntityAt(pt)
-	g.RUnlock()
-	if entity != nil {
-		return entity.Byte()
-	}
-	return g.World.At(pt)
+func (g *Game) EntityAt(pt Point) *Control {
+	entity, _ := g.at(true, pt)
+	return entity
+}
+
+func (g *Game) ByteAt(pt Point) byte {
+	_, block := g.at(false, pt)
+	return block
 }
 
 func (g *Game) Tick() {
@@ -158,10 +167,7 @@ func (g *Game) Dump(from, to Point) (out string) {
 	for i := from.Y; i <= to.Y; i++ {
 		for j := from.X; j <= to.X; j++ {
 
-			pt := Point{j, i}
-
-			bt := g.At(pt)
-			out += fmt.Sprintf(" %d", bt)
+			out += fmt.Sprintf(" %d", g.ByteAt(Point{j, i}))
 		}
 		out += "\n"
 	}
